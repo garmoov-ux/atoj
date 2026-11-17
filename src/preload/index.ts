@@ -9,6 +9,14 @@ import type {
 
 const atojApi: AtojElectronApi = {
   getSummary: () => ipcRenderer.invoke(IPC_CHANNELS.GET_SUMMARY),
+  getRecentLogs: (limit?: number) => ipcRenderer.invoke(IPC_CHANNELS.GET_RECENT_LOGS, limit),
+  getMonthlyStats: (yearMonth?: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.GET_MONTHLY_STATS, yearMonth),
+  exportMonthlyPdf: (yearMonth: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.EXPORT_MONTHLY_PDF, yearMonth),
+  getStorageInfo: () => ipcRenderer.invoke(IPC_CHANNELS.GET_STORAGE_INFO),
+  openFolderPath: (targetPath: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.OPEN_FOLDER_PATH, targetPath),
   queryHistory: (filter: HistoryQueryFilter) =>
     ipcRenderer.invoke(IPC_CHANNELS.QUERY_HISTORY, filter),
   clearHistory: () => ipcRenderer.invoke(IPC_CHANNELS.CLEAR_HISTORY),
@@ -20,6 +28,8 @@ const atojApi: AtojElectronApi = {
   selectInspectFile: () => ipcRenderer.invoke(IPC_CHANNELS.SELECT_INSPECT_FILE),
   inspectBinaryFile: (filePath: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.INSPECT_BINARY_FILE, filePath),
+  inspectRecord: (recordId?: number) =>
+    ipcRenderer.invoke(IPC_CHANNELS.INSPECT_RECORD, recordId),
   convertSingleFile: (filePath: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.CONVERT_SINGLE_FILE, filePath),
   toggleWatcher: (enable: boolean) => ipcRenderer.invoke(IPC_CHANNELS.TOGGLE_WATCHER, enable),

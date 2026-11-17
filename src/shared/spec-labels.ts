@@ -42,6 +42,17 @@ export const SIGNAL_TYPE_LABELS: Record<number, string> = {
   4: '5색등 (적·황·좌·직·우)',
 };
 
+export const ENF_TYPE_LABELS: Record<string, string> = {
+  '1': '지점과속 / 신호위반',
+  '2': '구간과속 / 차로위반',
+};
+
+export const TRIGGER_TYPE_LABELS: Record<string, string> = {
+  '0': '위반 단속 트리거',
+  '1': '소프트 트리거',
+  '2': '원(One) 트리거',
+};
+
 export function formatViolationTimestamp(raw17: string): string {
   const clean = raw17.trim();
   if (clean.length >= 14) {

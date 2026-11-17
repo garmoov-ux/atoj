@@ -1,13 +1,12 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, Eye, RefreshCw, Trash2 } from 'lucide-react';
-import { UtilityCard } from '../../components/ui/UtilityCard';
 import { PillButton } from '../../components/ui/PillButton';
 import { OptionChip } from '../../components/ui/OptionChip';
 import { SearchInput } from '../../components/ui/SearchInput';
 import type { ConversionRecord, HistoryQueryFilter } from '@shared/types/domain';
 
 interface HistoryViewProps {
-  onInspectFile: (filePath: string) => void;
+  onInspectRecord: (record: ConversionRecord) => void;
   onStatusMessage: (msg: string) => void;
 }
 
@@ -23,7 +22,7 @@ type SortKey =
   | 'targetFileName';
 
 export const HistoryView: React.FC<HistoryViewProps> = ({
-  onInspectFile,
+  onInspectRecord,
   onStatusMessage,
 }) => {
   const [items, setItems] = useState<ConversionRecord[]>([]);
@@ -79,11 +78,11 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   }, [items, sortKey, sortDir]);
 
   const renderSortIcon = (key: SortKey) => {
-    if (sortKey !== key) return <ArrowUpDown className="w-3.5 h-3.5 text-[#b0b0b5]" />;
+    if (sortKey !== key) return <ArrowUpDown className="w-3 h-3 text-[#94a3b8]" />;
     return sortDir === 'asc' ? (
-      <ArrowUp className="w-3.5 h-3.5 text-[#0066cc]" />
+      <ArrowUp className="w-3 h-3 text-[#2563eb]" />
     ) : (
-      <ArrowDown className="w-3.5 h-3.5 text-[#0066cc]" />
+      <ArrowDown className="w-3 h-3 text-[#2563eb]" />
     );
   };
 
@@ -105,41 +104,44 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   };
 
   return (
-    <div className="h-full p-5 max-w-[1440px] w-full mx-auto min-h-0 flex flex-col">
-      <UtilityCard
-        title="단속 변환 이력"
-        badge={
-          <span className="text-[13px] text-[#7a7a7a] font-normal whitespace-nowrap">
-            총 {total.toLocaleString()}건 (컬럼 헤더 클릭 시 오름·내림차순 정렬)
-          </span>
-        }
-        rightAction={
-          <>
+    <div className="h-full p-3.5 w-full min-h-0 flex flex-col gap-3">
+      {/* 방법 A: 상단 독립 검색·필터·액션 바 */}
+      <section className="bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] px-4 py-2.5 flex flex-col gap-2.5 shrink-0">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h2 className="text-[15px] font-bold text-[#0f172a] whitespace-nowrap">
+              단속 변환 이력 조회
+            </h2>
+            <span className="text-[12px] text-[#64748b] whitespace-nowrap">
+              총 <strong className="text-[#0f172a] font-semibold">{total.toLocaleString()}</strong>건 · 행 클릭 시 스냅샷 영상 및 속성:값 열람
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
             <PillButton variant="pearl-capsule" size="sm" onClick={() => void fetchHistory()}>
               <RefreshCw className="w-3.5 h-3.5" />
               <span>새로고침</span>
             </PillButton>
             <PillButton variant="secondary-pill" size="sm" onClick={() => void handleExportCsv()}>
               <Download className="w-3.5 h-3.5" />
-              <span>목록 파일 저장</span>
+              <span>CSV 내보내기</span>
             </PillButton>
             <PillButton variant="dark-utility" size="sm" onClick={() => void handleClear()}>
               <Trash2 className="w-3.5 h-3.5" />
               <span>이력 비우기</span>
             </PillButton>
-          </>
-        }
-        className="h-full"
-      >
-        <div className="flex items-center justify-between gap-3 mb-3.5 shrink-0">
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2.5 pt-2 border-t border-[#e2e8f0]">
           <SearchInput
-            wrapperClassName="w-[320px] shrink-0"
+            wrapperClassName="w-[270px] shrink-0"
             placeholder="차량번호 · 장비번호 · 파일명 검색"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
 
-          <div className="flex items-center gap-1.5 overflow-x-auto">
+          <div className="flex items-center gap-1 overflow-x-auto">
             <OptionChip selected={enfCode === 'ALL'} onClick={() => setEnfCode('ALL')}>
               전체 위반
             </OptionChip>
@@ -149,7 +151,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             <OptionChip selected={enfCode === '3'} onClick={() => setEnfCode('3')}>
               신호위반
             </OptionChip>
-            <span className="mx-1 text-[#e0e0e0]">|</span>
+            <span className="mx-1 text-[#cbd5e1]">|</span>
             <OptionChip selected={status === 'ALL'} onClick={() => setStatus('ALL')}>
               전체 상태
             </OptionChip>
@@ -161,163 +163,194 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             </OptionChip>
           </div>
         </div>
+      </section>
 
-        <div className="flex-1 min-h-0 overflow-y-auto border border-[#e0e0e0] rounded-[12px]">
-          <table className="w-full text-left border-collapse text-[14px]">
-            <thead className="sticky top-0 bg-[#f5f5f7] z-10 border-b border-[#e0e0e0] text-[#333333] text-[13px]">
+      {/* 방법 A: 하단 단일 테두리 테이블 시트 (이중 테두리 없음) */}
+      <section className="flex-1 min-h-0 bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] overflow-hidden flex flex-col">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <table className="w-full text-left border-collapse text-[12.5px]">
+            <thead className="sticky top-0 bg-[#f1f5f9] z-10 border-b border-[#cbd5e1] text-[#334155] text-[12px]">
               <tr>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('id')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>순번</span>
                     {renderSortIcon('id')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('status')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>상태</span>
                     {renderSortIcon('status')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('enfCode')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>위반구분</span>
                     {renderSortIcon('enfCode')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('deviceCode')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>장비번호</span>
                     {renderSortIcon('deviceCode')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('carNum')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>차량번호</span>
                     {renderSortIcon('carNum')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('enfSpeed')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>차로 · 속도</span>
                     {renderSortIcon('enfSpeed')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('imageCount')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>영상수</span>
                     {renderSortIcon('imageCount')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('violationTime')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>위반일시</span>
                     {renderSortIcon('violationTime')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap">
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap">
                   <button
                     type="button"
                     onClick={() => handleSort('targetFileName')}
-                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#0066cc]"
+                    className="inline-flex items-center gap-1 cursor-pointer hover:text-[#2563eb]"
                   >
                     <span>변환 파일명</span>
                     {renderSortIcon('targetFileName')}
                   </button>
                 </th>
-                <th className="py-2.5 px-3.5 font-semibold whitespace-nowrap text-right">영상</th>
+                <th className="py-2.5 px-3 font-semibold whitespace-nowrap text-right">조회</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#f0f0f0] bg-[#ffffff]">
+            <tbody className="divide-y divide-[#e2e8f0] bg-[#ffffff]">
               {sortedItems.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-16 text-center text-[#7a7a7a]">
+                  <td colSpan={10} className="py-20 text-center text-[#64748b]">
                     조회된 변환 이력이 없습니다.
                   </td>
                 </tr>
               ) : (
-                sortedItems.map((r) => (
-                  <tr key={r.id} className="hover:bg-[#f5f5f7]/60">
-                    <td className="py-2 px-3.5 text-[#7a7a7a] whitespace-nowrap">{r.id}번</td>
-                    <td className="py-2 px-3.5 whitespace-nowrap">
-                      <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-[12px] font-semibold ${
-                          r.status === 'SUCCESS'
-                            ? 'bg-[#0066cc]/10 text-[#0066cc]'
-                            : 'bg-[#f5f5f7] text-[#7a7a7a]'
-                        }`}
-                      >
-                        {r.status === 'SUCCESS' ? '완료' : r.status === 'FAILED' ? '실패' : '제외'}
-                      </span>
-                    </td>
-                    <td className="py-2 px-3.5 font-semibold whitespace-nowrap">
-                      {r.enfCode === '1' ? '속도위반' : r.enfCode === '3' ? '신호위반' : '-'}
-                    </td>
-                    <td className="py-2 px-3.5 whitespace-nowrap">{r.deviceCode}</td>
-                    <td className="py-2 px-3.5 font-semibold whitespace-nowrap">{r.carNum}</td>
-                    <td className="py-2 px-3.5 whitespace-nowrap">
-                      {r.lane > 0 ? `${r.lane}차로 · ${r.enfSpeed}킬로` : '-'}
-                    </td>
-                    <td className="py-2 px-3.5 whitespace-nowrap">{r.imageCount}장</td>
-                    <td className="py-2 px-3.5 text-[13px] text-[#7a7a7a] whitespace-nowrap">
-                      {r.violationTime}
-                    </td>
-                    <td
-                      className="py-2 px-3.5 text-[13px] max-w-[260px] truncate"
-                      title={r.targetFileName || r.errorMessage || r.sourceFileName}
+                sortedItems.map((r) => {
+                  const canInspect = r.status === 'SUCCESS' || Boolean(r.targetPath);
+                  return (
+                    <tr
+                      key={r.id}
+                      onClick={() => canInspect && onInspectRecord(r)}
+                      className={
+                        canInspect
+                          ? 'hover:bg-[#eff6ff]/70 cursor-pointer transition-colors'
+                          : 'hover:bg-[#f8fafc]'
+                      }
                     >
-                      {r.targetFileName || r.errorMessage || r.sourceFileName}
-                    </td>
-                    <td className="py-2 px-3.5 text-right whitespace-nowrap">
-                      {r.targetPath && (
-                        <button
-                          type="button"
-                          onClick={() => onInspectFile(r.targetPath!)}
-                          className="inline-flex items-center gap-1 text-[13px] text-[#0066cc] font-semibold cursor-pointer transition-transform duration-150 active:scale-95"
+                      <td className="py-2 px-3 text-[#64748b] whitespace-nowrap">#{r.id}</td>
+                      <td className="py-2 px-3 whitespace-nowrap">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-[5px] text-[11px] font-semibold ${
+                            r.status === 'SUCCESS'
+                              ? 'bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0]'
+                              : r.status === 'FAILED'
+                                ? 'bg-[#ffe4e6] text-[#be123c] border border-[#fecdd3]'
+                                : 'bg-[#f1f5f9] text-[#64748b]'
+                          }`}
                         >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>보기</span>
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                          {r.status === 'SUCCESS' ? '완료' : r.status === 'FAILED' ? '실패' : '제외'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 font-semibold whitespace-nowrap">
+                        <span
+                          className={
+                            r.enfCode === '3'
+                              ? 'text-[#e11d48]'
+                              : r.enfCode === '1'
+                                ? 'text-[#d97706]'
+                                : 'text-[#64748b]'
+                          }
+                        >
+                          {r.enfCode === '1' ? '속도위반' : r.enfCode === '3' ? '신호위반' : '-'}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 whitespace-nowrap">{r.deviceCode}</td>
+                      <td className="py-2 px-3 font-bold whitespace-nowrap text-[#0f172a]">
+                        {r.carNum}
+                      </td>
+                      <td className="py-2 px-3 whitespace-nowrap">
+                        {r.lane > 0 ? `${r.lane}차로 · ${r.enfSpeed}km/h` : '-'}
+                      </td>
+                      <td className="py-2 px-3 whitespace-nowrap">{r.imageCount}장</td>
+                      <td className="py-2 px-3 text-[12px] text-[#64748b] whitespace-nowrap">
+                        {r.violationTime}
+                      </td>
+                      <td
+                        className="py-2 px-3 text-[12px] max-w-[210px] truncate"
+                        title={r.targetFileName || r.errorMessage || r.sourceFileName}
+                      >
+                        {r.targetFileName || r.errorMessage || r.sourceFileName}
+                      </td>
+                      <td className="py-2 px-3 text-right whitespace-nowrap">
+                        {canInspect && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onInspectRecord(r);
+                            }}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[5px] bg-[#eff6ff] hover:bg-[#dbeafe] text-[11.5px] text-[#1d4ed8] font-semibold cursor-pointer"
+                          >
+                            <Eye className="w-3 h-3" />
+                            <span>상세</span>
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
         </div>
-      </UtilityCard>
+      </section>
     </div>
   );
 };

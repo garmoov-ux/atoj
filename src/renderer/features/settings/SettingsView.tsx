@@ -25,7 +25,7 @@ function SegmentedControl<T extends string | number | boolean>({
   onChange: (val: T) => void;
 }) {
   return (
-    <div className="inline-flex items-center p-1 rounded-[10px] bg-[#e8e8ed] gap-0.5 shrink-0">
+    <div className="inline-flex items-center p-0.5 rounded-[7px] bg-[#e2e8f0] gap-0.5 shrink-0">
       {options.map((opt) => {
         const active = opt.value === value;
         return (
@@ -33,10 +33,10 @@ function SegmentedControl<T extends string | number | boolean>({
             key={String(opt.value)}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`h-[30px] px-3 rounded-[8px] text-[13px] whitespace-nowrap transition-all duration-150 active:scale-95 cursor-pointer select-none ${
+            className={`h-[26px] px-2.5 rounded-[5px] text-[12px] whitespace-nowrap transition-all duration-150 active:scale-95 cursor-pointer select-none ${
               active
-                ? 'bg-[#0066cc] text-white font-semibold'
-                : 'text-[#333333] hover:text-[#1d1d1f] font-normal'
+                ? 'bg-[#2563eb] text-white font-semibold'
+                : 'text-[#334155] hover:text-[#0f172a] font-medium'
             }`}
           >
             {opt.label}
@@ -57,7 +57,7 @@ const SLEEP_OPTIONS: SegmentOption<number>[] = [
 
 const BOOL_SCAN_OPTIONS: SegmentOption<boolean>[] = [
   { label: '사용함', value: true },
-  { label: '사용 안 함', value: false },
+  { label: '안 함', value: false },
 ];
 
 const POLICY_OPTIONS: SegmentOption<InvalidFilePolicy>[] = [
@@ -67,7 +67,7 @@ const POLICY_OPTIONS: SegmentOption<InvalidFilePolicy>[] = [
 ];
 
 const CLOSE_OPTIONS: SegmentOption<boolean>[] = [
-  { label: '트레이로 숨김', value: true },
+  { label: '트레이 숨김', value: true },
   { label: '완전 종료', value: false },
 ];
 
@@ -113,7 +113,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   }, [config]);
 
   if (!draft) {
-    return <div className="p-8 text-center text-[#7a7a7a]">설정을 불러오는 중입니다...</div>;
+    return <div className="p-8 text-center text-[#64748b]">설정을 불러오는 중입니다...</div>;
   }
 
   const handleAddSourceFolder = async () => {
@@ -162,38 +162,35 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="h-full p-5 max-w-[1440px] w-full mx-auto min-h-0 flex flex-col gap-4">
-      {/* 상단 환경설정 공통 액션 바 (우측 상단에 전체 환경설정 저장 버튼 배치) */}
-      <div className="bg-[#ffffff] border border-[#e0e0e0] rounded-[16px] px-5 py-3 flex items-center justify-between gap-4 shrink-0">
-        <div className="flex items-center gap-3 min-w-0">
-          <h2 className="text-[17px] font-semibold text-[#1d1d1f] whitespace-nowrap">
-            전체 환경 설정 관리
+    <div className="h-full p-3.5 w-full min-h-0 flex flex-col gap-3">
+      <div className="bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] px-4 py-2.5 flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <h2 className="text-[15px] font-bold text-[#0f172a] whitespace-nowrap">
+            환경 설정 관리
           </h2>
-          <span className="text-[13px] text-[#7a7a7a] truncate">
-            수신 폴더, 절대경로, 상대경로, 감시 동작 및 보관 기간을 관리합니다.
+          <span className="text-[12px] text-[#64748b] truncate">
+            수신 폴더, 저장 경로, 감시 정책 및 스냅샷/이력 보관 기간을 설정합니다.
           </span>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
           <PillButton variant="pearl-capsule" size="sm" onClick={() => void onRunCleanupNow()}>
-            <Sparkles className="w-4 h-4 text-[#0066cc]" />
-            <span>오래된 파일 지금 정리</span>
+            <Sparkles className="w-3.5 h-3.5 text-[#2563eb]" />
+            <span>경과 데이터 즉시 정리</span>
           </PillButton>
-          <PillButton variant="primary" size="md" onClick={() => void onSaveConfig(draft)}>
-            <Save className="w-4 h-4" />
+          <PillButton variant="primary" size="sm" onClick={() => void onSaveConfig(draft)}>
+            <Save className="w-3.5 h-3.5" />
             <span>설정 저장</span>
           </PillButton>
         </div>
       </div>
 
-      {/* 본문 2단 그리드 */}
-      <div className="flex-1 min-h-0 grid grid-cols-12 gap-4">
-        {/* 좌측: 수신 폴더 및 저장 경로 */}
-        <div className="col-span-6 min-h-0 flex flex-col gap-4">
+      <div className="flex-1 min-h-0 grid grid-cols-12 gap-3">
+        <div className="col-span-6 min-h-0 flex flex-col gap-3">
           <UtilityCard
             title="아규격 수신 감시 폴더"
             badge={
-              <span className="text-[13px] text-[#7a7a7a] font-normal">
+              <span className="text-[12px] text-[#64748b] font-normal">
                 {draft.paths.sources.length}개 등록
               </span>
             }
@@ -209,34 +206,34 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             }
             className="flex-1 min-h-0"
           >
-            <div className="flex gap-2 mb-3 shrink-0">
+            <div className="flex gap-1.5 mb-2.5 shrink-0">
               <input
                 type="text"
                 value={newSourceInput}
                 onChange={(e) => setNewSourceInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddSourceManual()}
-                placeholder="폴더 경로 직접 입력 (예: C:/save_std2 또는 ./incoming)"
-                className="flex-1 h-[36px] px-3.5 rounded-full bg-[#f5f5f7] border border-[#e0e0e0] text-[14px] focus:bg-[#ffffff] focus:outline-2 focus:outline-[#0071e3]"
+                placeholder="경로 직접 입력 (예: C:/save_std2 또는 ./incoming)"
+                className="flex-1 h-[30px] px-3 rounded-[7px] bg-[#f8fafc] border border-[#cbd5e1] text-[12.5px] focus:bg-[#ffffff] focus:outline-2 focus:outline-[#2563eb]"
               />
               <PillButton variant="pearl-capsule" size="sm" onClick={handleAddSourceManual}>
                 추가
               </PillButton>
             </div>
 
-            <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-1.5 pr-1">
               {draft.paths.sources.map((src) => (
                 <div
                   key={src}
-                  className="flex items-center justify-between px-3.5 py-2.5 rounded-[12px] bg-[#f5f5f7] border border-[#e0e0e0]"
+                  className="flex items-center justify-between px-3 py-1.5 rounded-[7px] bg-[#f8fafc] border border-[#cbd5e1]"
                 >
-                  <span className="text-[14px] text-[#1d1d1f] truncate">{src}</span>
+                  <span className="text-[12.5px] text-[#0f172a] font-medium truncate">{src}</span>
                   <button
                     type="button"
                     onClick={() => handleRemoveSource(src)}
-                    className="text-[#7a7a7a] hover:text-[#1d1d1f] p-1 cursor-pointer shrink-0"
+                    className="text-[#64748b] hover:text-[#e11d48] p-1 cursor-pointer shrink-0"
                     title="삭제"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
@@ -244,9 +241,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </UtilityCard>
 
           <UtilityCard title="출력 및 로그 저장 경로" className="shrink-0">
-            <div className="rounded-[14px] bg-[#f5f5f7] border border-[#e0e0e0] divide-y divide-[#e0e0e0]">
-              <div className="flex items-center justify-between gap-2.5 px-4 py-3">
-                <span className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap w-[130px] shrink-0">
+            <div className="rounded-[8px] bg-[#f8fafc] border border-[#cbd5e1] divide-y divide-[#e2e8f0]">
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap w-[105px] shrink-0">
                   자규격 저장 폴더
                 </span>
                 <input
@@ -256,7 +253,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     setDraft({ ...draft, paths: { ...draft.paths, targetDir: e.target.value } })
                   }
                   placeholder="./result"
-                  className="flex-1 min-w-0 h-[32px] px-3 rounded-[8px] bg-[#ffffff] border border-[#e0e0e0] text-[13px]"
+                  className="flex-1 min-w-0 h-[28px] px-2.5 rounded-[6px] bg-[#ffffff] border border-[#cbd5e1] text-[12px]"
                 />
                 <PillButton
                   variant="pearl-capsule"
@@ -278,8 +275,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 </PillButton>
               </div>
 
-              <div className="flex items-center justify-between gap-2.5 px-4 py-3">
-                <span className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap w-[130px] shrink-0">
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap w-[105px] shrink-0">
                   로그 기록 폴더
                 </span>
                 <input
@@ -289,7 +286,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     setDraft({ ...draft, paths: { ...draft.paths, logDir: e.target.value } })
                   }
                   placeholder="./log"
-                  className="flex-1 min-w-0 h-[32px] px-3 rounded-[8px] bg-[#ffffff] border border-[#e0e0e0] text-[13px]"
+                  className="flex-1 min-w-0 h-[28px] px-2.5 rounded-[6px] bg-[#ffffff] border border-[#cbd5e1] text-[12px]"
                 />
                 <PillButton
                   variant="pearl-capsule"
@@ -314,19 +311,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </UtilityCard>
         </div>
 
-        {/* 우측: 감시·시스템 동작 카드 + 자동 보관(삭제) 카드 */}
-        <div className="col-span-6 min-h-0 flex flex-col gap-4">
+        <div className="col-span-6 min-h-0 flex flex-col gap-3">
           <UtilityCard title="감시 및 시스템 동작" className="shrink-0">
-            <div className="rounded-[14px] bg-[#f5f5f7] border border-[#e0e0e0] divide-y divide-[#e0e0e0]">
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <div>
-                  <div className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap">
-                    파일 쓰기 완료 대기 시간
-                  </div>
-                  <div className="text-[12px] text-[#7a7a7a] whitespace-nowrap">
-                    수신 파일이 완전히 기록될 때까지 대기
-                  </div>
-                </div>
+            <div className="rounded-[8px] bg-[#f8fafc] border border-[#cbd5e1] divide-y divide-[#e2e8f0]">
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap">
+                  파일 쓰기 완료 대기 시간
+                </span>
                 <SegmentedControl
                   options={SLEEP_OPTIONS}
                   value={draft.watcher.writeStabilitySec}
@@ -339,15 +330,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <div>
-                  <div className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap">
-                    시작 시 미처리 파일 자동 점검
-                  </div>
-                  <div className="text-[12px] text-[#7a7a7a] whitespace-nowrap">
-                    프로그램 실행 시 폴더 내 잔여 파일 변환
-                  </div>
-                </div>
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap">
+                  시작 시 미처리 파일 자동 점검
+                </span>
                 <SegmentedControl
                   options={BOOL_SCAN_OPTIONS}
                   value={draft.watcher.scanExistingOnStart}
@@ -360,15 +346,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <div>
-                  <div className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap">
-                    비규격 파일 처리 방식
-                  </div>
-                  <div className="text-[12px] text-[#7a7a7a] whitespace-nowrap">
-                    아규격 형식이 아닌 파일 유입 시 동작
-                  </div>
-                </div>
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap">
+                  비규격 파일 유입 시 처리
+                </span>
                 <SegmentedControl
                   options={POLICY_OPTIONS}
                   value={draft.watcher.invalidFilePolicy}
@@ -381,15 +362,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <div>
-                  <div className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap">
-                    창 닫기 버튼 클릭 시 동작
-                  </div>
-                  <div className="text-[12px] text-[#7a7a7a] whitespace-nowrap">
-                    트레이 아이콘 우클릭으로 완전 종료 가능
-                  </div>
-                </div>
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap">
+                  창 닫기(X) 클릭 시 동작
+                </span>
                 <SegmentedControl
                   options={CLOSE_OPTIONS}
                   value={draft.system.minimizeToTrayOnClose}
@@ -405,13 +381,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </UtilityCard>
 
           <UtilityCard
-            title="보관 기간 및 자동 삭제"
+            title="보관 기간 및 자동 삭제 (스냅샷 포함)"
             className="flex-1 min-h-0"
             bodyClassName="justify-between"
           >
-            <div className="rounded-[14px] bg-[#f5f5f7] border border-[#e0e0e0] divide-y divide-[#e0e0e0]">
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <span className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+            <div className="rounded-[8px] bg-[#f8fafc] border border-[#cbd5e1] divide-y divide-[#e2e8f0]">
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap">
                   로그 파일 보관 기간
                 </span>
                 <SegmentedControl
@@ -426,9 +402,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <span className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap">
-                  단속 변환 이력 보관 기간
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap">
+                  변환 이력 및 스냅샷 보관
                 </span>
                 <SegmentedControl
                   options={DB_RETENTION_OPTIONS}
@@ -442,8 +418,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <span className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap">
                   결과 폴더 미수거 파일 보관
                 </span>
                 <SegmentedControl
@@ -458,8 +434,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 />
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-                <span className="text-[14px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+              <div className="flex items-center justify-between gap-2 px-3 py-2">
+                <span className="text-[12.5px] font-semibold text-[#0f172a] whitespace-nowrap">
                   격리 폴더 파일 보관 기간
                 </span>
                 <SegmentedControl
@@ -475,9 +451,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               </div>
             </div>
 
-            <div className="text-[13px] text-[#7a7a7a] flex items-center justify-between px-1 pt-2">
-              <span>보관 기간이 지난 파일과 이력은 매시간 자동으로 정리됩니다.</span>
-              <span className="font-semibold text-[#333333]">우측 상단 [설정 저장] 클릭 시 전체 반영</span>
+            <div className="text-[11.5px] text-[#64748b] flex items-center justify-between px-1 pt-1.5">
+              <span>외부 반출 후에도 이력 보관 기간 동안 스냅샷 영상과 속성이 보존됩니다.</span>
+              <span className="font-semibold text-[#2563eb]">[설정 저장] 클릭 시 반영</span>
             </div>
           </UtilityCard>
         </div>

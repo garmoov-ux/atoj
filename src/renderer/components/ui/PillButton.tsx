@@ -16,18 +16,20 @@ export const PillButton: React.FC<PillButtonProps> = ({
   ...props
 }) => {
   const base =
-    'inline-flex items-center justify-center gap-1.5 font-normal whitespace-nowrap shrink-0 transition-transform duration-150 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0071e3] disabled:opacity-45 disabled:pointer-events-none cursor-pointer select-none';
+    'inline-flex items-center justify-center gap-1.5 font-medium whitespace-nowrap shrink-0 transition-all duration-150 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] disabled:opacity-40 disabled:pointer-events-none cursor-pointer select-none';
 
   const sizeClass =
     size === 'sm'
-      ? 'h-[34px] px-4 text-[13px] leading-none'
-      : 'h-[38px] px-5 text-[14px] leading-none';
+      ? 'h-[30px] px-3 text-[12.5px] leading-none'
+      : 'h-[34px] px-4 text-[13px] leading-none';
 
   const variantMap: Record<PillButtonVariant, string> = {
-    primary: 'bg-[#0066cc] text-white rounded-full',
-    'secondary-pill': 'bg-transparent text-[#0066cc] border border-[#0066cc] rounded-full',
-    'dark-utility': 'bg-[#1d1d1f] text-white rounded-[8px]',
-    'pearl-capsule': 'bg-[#fafafc] text-[#333333] border border-[#e0e0e0] rounded-[10px]',
+    primary: 'bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-[7px]',
+    'secondary-pill':
+      'bg-[#eff6ff] hover:bg-[#dbeafe] text-[#1d4ed8] border border-[#93c5fd] rounded-[7px]',
+    'dark-utility': 'bg-[#1e293b] hover:bg-[#334155] text-white rounded-[7px]',
+    'pearl-capsule':
+      'bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#334155] border border-[#cbd5e1] rounded-[7px]',
   };
 
   return (

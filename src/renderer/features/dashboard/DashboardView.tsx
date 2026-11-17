@@ -8,7 +8,7 @@ interface DashboardViewProps {
   summary: DashboardSummary;
   config: AtojAppConfig | null;
   recentRecords: ConversionRecord[];
-  onInspectFile: (filePath: string) => void;
+  onInspectRecord: (record: ConversionRecord) => void;
   onGoHistory: () => void;
   onGoSettings: () => void;
 }
@@ -17,15 +17,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   summary,
   config,
   recentRecords,
-  onInspectFile,
+  onInspectRecord,
   onGoHistory,
   onGoSettings,
 }) => {
   return (
-    <div className="h-full flex flex-col gap-4 p-5 max-w-[1440px] w-full mx-auto min-h-0">
+    <div className="h-full flex flex-col gap-3 p-3.5 w-full min-h-0">
       <DashboardHeroTile summary={summary} />
 
-      <div className="flex-1 min-h-0 grid grid-cols-12 gap-4">
+      <div className="flex-1 min-h-0 grid grid-cols-12 gap-3">
         <div className="col-span-4 min-h-0">
           <WatchedFoldersCard
             summary={summary}
@@ -37,7 +37,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="col-span-8 min-h-0">
           <RecentStreamCard
             records={recentRecords}
-            onInspectFile={onInspectFile}
+            onInspectRecord={onInspectRecord}
             onGoHistory={onGoHistory}
           />
         </div>

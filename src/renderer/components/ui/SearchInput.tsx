@@ -12,10 +12,10 @@ export const SearchInput: React.FC<SearchInputProps> = ({
 }) => {
   return (
     <div className={`relative flex items-center ${wrapperClassName}`}>
-      <Search className="w-4 h-4 text-[#7a7a7a] absolute left-3.5 pointer-events-none" />
+      <Search className="w-3.5 h-3.5 text-[#64748b] absolute left-3 pointer-events-none" />
       <input
         type="text"
-        className={`w-full h-[36px] pl-10 pr-4 rounded-full bg-[#f5f5f7] text-[#1d1d1f] text-[14px] border border-[#e0e0e0] focus:bg-[#ffffff] focus:outline-2 focus:outline-[#0071e3] placeholder:text-[#7a7a7a] ${className}`}
+        className={`w-full h-[30px] pl-8 pr-3 rounded-[7px] bg-[#f8fafc] text-[#0f172a] text-[12.5px] border border-[#cbd5e1] focus:bg-[#ffffff] focus:outline-2 focus:outline-[#2563eb] placeholder:text-[#64748b] ${className}`}
         {...props}
       />
     </div>

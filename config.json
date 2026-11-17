@@ -3,7 +3,8 @@
     "sources": [
       "C:/save_std2",
       "D:/MuinServer/2_Metafile/Signal",
-      "D:/MuinServer/2_Metafile/Speed"
+      "D:/MuinServer/2_Metafile/Speed",
+      "C:/Users/User/Downloads/test"
     ],
     "targetDir": "./result",
     "logDir": "./log",

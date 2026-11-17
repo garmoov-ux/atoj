@@ -4,6 +4,7 @@ import chokidar, { type FSWatcher } from 'chokidar';
 import { resolveAppPath } from '../config/app-paths';
 import { validateAverFileName } from '../converter/aver-parser';
 import { convertAverFileToJver } from '../converter/jver-packer';
+import { saveConversionSnapshot } from '../converter/snapshot-archive';
 import type { ConversionRepository } from '../db/conversion-repo';
 import { FileLogger } from './file-logger';
 import {
@@ -242,11 +243,15 @@ export class FolderWatcherService {
         fs.unlinkSync(resolved);
       }
 
+      const snapshotPath = saveConversionSnapshot(packed.fileName, packed.buffer);
+
       const record = this.repo.insert({
         sourcePath: resolved,
         sourceFileName: fileName,
         targetPath: outputFilePath,
         targetFileName: packed.fileName,
+        snapshotPath,
+        headerJson: JSON.stringify(header),
         deviceCode: header.deviceCode,
         carNum: header.carNum,
         enfCode: header.enfCode,

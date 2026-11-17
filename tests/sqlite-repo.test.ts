@@ -53,6 +53,16 @@ describe('SQLite(:memory:) 변환 이력 리포지토리 검증', () => {
     expect(searchRes.total).toBe(1);
     expect(searchRes.items[0].deviceCode).toBe('F5678');
 
+    const latest = repo.getLatestSuccess();
+    expect(latest).not.toBeNull();
+    expect(latest?.carNum).toBe('서울02라1234');
+
+    const navLatest = repo.getNavigationMeta(latest!.id);
+    expect(navLatest.currentPosition).toBe(1);
+    expect(navLatest.totalSuccessCount).toBe(2);
+    expect(navLatest.prevRecordId).toBe(1);
+    expect(navLatest.nextRecordId).toBeNull();
+
     const cleared = repo.clearAll();
     expect(cleared).toBe(2);
     db.close();
