@@ -8,10 +8,8 @@ interface DashboardViewProps {
   summary: DashboardSummary;
   config: AtojAppConfig | null;
   recentRecords: ConversionRecord[];
-  onManualConvert: () => void;
   onInspectFile: (filePath: string) => void;
   onGoHistory: () => void;
-  onGoViewer: () => void;
   onGoSettings: () => void;
 }
 
@@ -19,32 +17,30 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   summary,
   config,
   recentRecords,
-  onManualConvert,
   onInspectFile,
   onGoHistory,
-  onGoViewer,
   onGoSettings,
 }) => {
   return (
-    <div>
-      <DashboardHeroTile
-        summary={summary}
-        onManualConvert={onManualConvert}
-        onOpenViewer={onGoViewer}
-      />
+    <div className="h-full flex flex-col gap-4 p-5 max-w-[1440px] w-full mx-auto min-h-0">
+      <DashboardHeroTile summary={summary} />
 
-      <div className="max-w-[1360px] mx-auto px-6 py-6 space-y-6">
-        <WatchedFoldersCard
-          summary={summary}
-          config={config}
-          onGoSettings={onGoSettings}
-        />
+      <div className="flex-1 min-h-0 grid grid-cols-12 gap-4">
+        <div className="col-span-4 min-h-0">
+          <WatchedFoldersCard
+            summary={summary}
+            config={config}
+            onGoSettings={onGoSettings}
+          />
+        </div>
 
-        <RecentStreamCard
-          records={recentRecords}
-          onInspectFile={onInspectFile}
-          onGoHistory={onGoHistory}
-        />
+        <div className="col-span-8 min-h-0">
+          <RecentStreamCard
+            records={recentRecords}
+            onInspectFile={onInspectFile}
+            onGoHistory={onGoHistory}
+          />
+        </div>
       </div>
     </div>
   );

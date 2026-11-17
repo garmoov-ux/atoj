@@ -1,10 +1,10 @@
 export const VIOLATION_LABELS: Record<number, string> = {
-  1: '속도위반 (0x01)',
-  2: '버스전용차로위반 (0x02)',
-  3: '신호위반 (0x03)',
-  4: '갓길위반 (0x04)',
-  5: '신호위반 (0x05)',
-  7: '교차로통행방법위반 (0x07)',
+  1: '속도위반',
+  2: '버스전용차로위반',
+  3: '신호위반',
+  4: '갓길위반',
+  5: '신호위반',
+  7: '교차로통행방법위반',
 };
 
 export const CAR_TYPE_LABELS: Record<number, string> = {
@@ -13,7 +13,7 @@ export const CAR_TYPE_LABELS: Record<number, string> = {
   3: '대형화물차',
   4: '소형화물차',
   5: '특수차',
-  6: '알수없음',
+  6: '미분류',
 };
 
 export const SIGNAL_SHAPE_LABELS: Record<number, string> = {
@@ -51,8 +51,7 @@ export function formatViolationTimestamp(raw17: string): string {
     const hh = clean.slice(8, 10);
     const mm = clean.slice(10, 12);
     const ss = clean.slice(12, 14);
-    const ms = clean.slice(14, 17);
-    return ms ? `${y}-${m}-${d} ${hh}:${mm}:${ss}.${ms}` : `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+    return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
   }
   return clean;
 }

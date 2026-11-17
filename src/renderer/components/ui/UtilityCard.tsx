@@ -2,19 +2,21 @@ import React from 'react';
 
 interface UtilityCardProps {
   title?: string;
-  subtitle?: string;
+  badge?: React.ReactNode;
   rightAction?: React.ReactNode;
   dark?: boolean;
   className?: string;
+  bodyClassName?: string;
   children: React.ReactNode;
 }
 
 export const UtilityCard: React.FC<UtilityCardProps> = ({
   title,
-  subtitle,
+  badge,
   rightAction,
   dark = false,
   className = '',
+  bodyClassName = '',
   children,
 }) => {
   const surfaceClass = dark
@@ -22,29 +24,21 @@ export const UtilityCard: React.FC<UtilityCardProps> = ({
     : 'bg-[#ffffff] text-[#1d1d1f] border border-[#e0e0e0]';
 
   return (
-    <section className={`rounded-[18px] p-6 ${surfaceClass} ${className}`}>
+    <section className={`rounded-[18px] p-5 flex flex-col min-h-0 ${surfaceClass} ${className}`}>
       {(title || rightAction) && (
-        <header className="flex items-start justify-between gap-4 mb-5">
-          <div>
+        <header className="flex items-center justify-between gap-3 mb-3.5 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
             {title && (
-              <h3 className="text-[19px] font-semibold tracking-[-0.018em] leading-[1.2]">
+              <h3 className="text-[15px] font-semibold tracking-[-0.015em] whitespace-nowrap">
                 {title}
               </h3>
             )}
-            {subtitle && (
-              <p
-                className={`mt-1 text-[13px] ${
-                  dark ? 'text-[#cccccc]' : 'text-[#7a7a7a]'
-                }`}
-              >
-                {subtitle}
-              </p>
-            )}
+            {badge}
           </div>
-          {rightAction && <div className="shrink-0">{rightAction}</div>}
+          {rightAction && <div className="shrink-0 flex items-center gap-2">{rightAction}</div>}
         </header>
       )}
-      {children}
+      <div className={`flex-1 min-h-0 flex flex-col ${bodyClassName}`}>{children}</div>
     </section>
   );
 };
