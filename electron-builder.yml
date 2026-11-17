@@ -17,6 +17,7 @@ files:
 asarUnpack:
   - "**/*.node"
 win:
+  signAndEditExecutable: false
   target:
     - target: nsis
       arch:
