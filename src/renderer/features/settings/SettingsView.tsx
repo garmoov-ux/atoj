@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { FolderPlus, Save, Sparkles, Trash2 } from 'lucide-react';
 import { UtilityCard } from '../../components/ui/UtilityCard';
 import { PillButton } from '../../components/ui/PillButton';
-import { OptionChip } from '../../components/ui/OptionChip';
 import type { AtojAppConfig, InvalidFilePolicy } from '@shared/types/domain';
 
 interface SettingsViewProps {
@@ -11,26 +10,94 @@ interface SettingsViewProps {
   onRunCleanupNow: () => Promise<void>;
 }
 
-const LOG_RETENTION_OPTIONS = [
+interface SegmentOption<T> {
+  label: string;
+  value: T;
+}
+
+function SegmentedControl<T extends string | number | boolean>({
+  options,
+  value,
+  onChange,
+}: {
+  options: SegmentOption<T>[];
+  value: T;
+  onChange: (val: T) => void;
+}) {
+  return (
+    <div className="inline-flex items-center p-1 rounded-[10px] bg-[#e8e8ed] gap-0.5 shrink-0">
+      {options.map((opt) => {
+        const active = opt.value === value;
+        return (
+          <button
+            key={String(opt.value)}
+            type="button"
+            onClick={() => onChange(opt.value)}
+            className={`h-[28px] px-3 rounded-[8px] text-[12px] whitespace-nowrap transition-all duration-150 active:scale-95 cursor-pointer select-none ${
+              active
+                ? 'bg-[#0066cc] text-white font-semibold'
+                : 'text-[#333333] hover:text-[#1d1d1f] font-normal'
+            }`}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+const SLEEP_OPTIONS: SegmentOption<number>[] = [
+  { label: '1초', value: 1 },
+  { label: '2초', value: 2 },
+  { label: '3초', value: 3 },
+  { label: '5초', value: 5 },
+  { label: '10초', value: 10 },
+];
+
+const BOOL_SCAN_OPTIONS: SegmentOption<boolean>[] = [
+  { label: '사용함', value: true },
+  { label: '사용 안 함', value: false },
+];
+
+const POLICY_OPTIONS: SegmentOption<InvalidFilePolicy>[] = [
+  { label: '원본 보존', value: 'ignore' },
+  { label: '격리 이동', value: 'quarantine' },
+  { label: '즉시 삭제', value: 'delete' },
+];
+
+const CLOSE_OPTIONS: SegmentOption<boolean>[] = [
+  { label: '트레이로 숨김', value: true },
+  { label: '완전 종료', value: false },
+];
+
+const LOG_RETENTION_OPTIONS: SegmentOption<number>[] = [
   { label: '7일', value: 7 },
   { label: '30일', value: 30 },
   { label: '90일', value: 90 },
-  { label: '영구 보관', value: 0 },
+  { label: '영구', value: 0 },
 ];
 
-const DB_RETENTION_OPTIONS = [
+const DB_RETENTION_OPTIONS: SegmentOption<number>[] = [
   { label: '30일', value: 30 },
   { label: '90일', value: 90 },
   { label: '180일', value: 180 },
   { label: '365일', value: 365 },
-  { label: '영구 보관', value: 0 },
+  { label: '영구', value: 0 },
 ];
 
-const RESULT_RETENTION_OPTIONS = [
-  { label: '영구 보관', value: 0 },
+const RESULT_RETENTION_OPTIONS: SegmentOption<number>[] = [
+  { label: '영구', value: 0 },
   { label: '7일', value: 7 },
   { label: '14일', value: 14 },
   { label: '30일', value: 30 },
+];
+
+const QUARANTINE_RETENTION_OPTIONS: SegmentOption<number>[] = [
+  { label: '7일', value: 7 },
+  { label: '14일', value: 14 },
+  { label: '30일', value: 30 },
+  { label: '영구', value: 0 },
 ];
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
@@ -94,19 +161,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     }
   };
 
-  const setPolicy = (policy: InvalidFilePolicy) => {
-    setDraft({
-      ...draft,
-      watcher: { ...draft.watcher, invalidFilePolicy: policy },
-    });
-  };
-
   return (
     <div className="h-full p-5 max-w-[1440px] w-full mx-auto min-h-0 grid grid-cols-12 gap-4">
-      {/* 좌측: 수신 폴더 및 출력 경로 설정 */}
+      {/* 좌측: 수신 폴더 및 저장 경로 (2단 카드) */}
       <div className="col-span-6 min-h-0 flex flex-col gap-4">
         <UtilityCard
-          title="아규격 수신 폴더 목록"
+          title="아규격 수신 감시 폴더"
+          badge={
+            <span className="text-[12px] text-[#7a7a7a] font-normal">
+              {draft.paths.sources.length}개 등록
+            </span>
+          }
           rightAction={
             <PillButton
               variant="secondary-pill"
@@ -125,7 +190,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               value={newSourceInput}
               onChange={(e) => setNewSourceInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddSourceManual()}
-              placeholder="폴더 경로 직접 입력"
+              placeholder="폴더 경로 직접 입력 후 추가"
               className="flex-1 h-[34px] px-3.5 rounded-full bg-[#f5f5f7] border border-[#e0e0e0] text-[13px] focus:bg-[#ffffff] focus:outline-2 focus:outline-[#0071e3]"
             />
             <PillButton variant="pearl-capsule" size="sm" onClick={handleAddSourceManual}>
@@ -153,263 +218,232 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
         </UtilityCard>
 
-        <UtilityCard title="저장 폴더 경로" className="shrink-0">
-          <div className="grid grid-cols-2 gap-3.5">
-            <div>
-              <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1 whitespace-nowrap">
-                자규격 변환 파일 저장 폴더
-              </label>
-              <div className="flex gap-1.5">
-                <input
-                  type="text"
-                  value={draft.paths.targetDir}
-                  onChange={(e) =>
-                    setDraft({ ...draft, paths: { ...draft.paths, targetDir: e.target.value } })
-                  }
-                  className="flex-1 min-w-0 h-[32px] px-3 rounded-[10px] bg-[#f5f5f7] border border-[#e0e0e0] text-[12px]"
-                />
-                <PillButton
-                  variant="pearl-capsule"
-                  size="sm"
-                  onClick={() => void handlePickTargetDir()}
-                >
-                  변경
-                </PillButton>
-              </div>
+        <UtilityCard title="출력 및 로그 저장 경로" className="shrink-0">
+          <div className="rounded-[14px] bg-[#f5f5f7] border border-[#e0e0e0] divide-y divide-[#e0e0e0]">
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <span className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap w-[130px] shrink-0">
+                자규격 저장 폴더
+              </span>
+              <input
+                type="text"
+                value={draft.paths.targetDir}
+                onChange={(e) =>
+                  setDraft({ ...draft, paths: { ...draft.paths, targetDir: e.target.value } })
+                }
+                className="flex-1 min-w-0 h-[30px] px-3 rounded-[8px] bg-[#ffffff] border border-[#e0e0e0] text-[12px]"
+              />
+              <PillButton
+                variant="pearl-capsule"
+                size="sm"
+                onClick={() => void handlePickTargetDir()}
+              >
+                변경
+              </PillButton>
             </div>
 
-            <div>
-              <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1 whitespace-nowrap">
-                로그 기록 저장 폴더
-              </label>
-              <div className="flex gap-1.5">
-                <input
-                  type="text"
-                  value={draft.paths.logDir}
-                  onChange={(e) =>
-                    setDraft({ ...draft, paths: { ...draft.paths, logDir: e.target.value } })
-                  }
-                  className="flex-1 min-w-0 h-[32px] px-3 rounded-[10px] bg-[#f5f5f7] border border-[#e0e0e0] text-[12px]"
-                />
-                <PillButton
-                  variant="pearl-capsule"
-                  size="sm"
-                  onClick={() => void handlePickLogDir()}
-                >
-                  변경
-                </PillButton>
-              </div>
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
+              <span className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap w-[130px] shrink-0">
+                로그 기록 폴더
+              </span>
+              <input
+                type="text"
+                value={draft.paths.logDir}
+                onChange={(e) =>
+                  setDraft({ ...draft, paths: { ...draft.paths, logDir: e.target.value } })
+                }
+                className="flex-1 min-w-0 h-[30px] px-3 rounded-[8px] bg-[#ffffff] border border-[#e0e0e0] text-[12px]"
+              />
+              <PillButton
+                variant="pearl-capsule"
+                size="sm"
+                onClick={() => void handlePickLogDir()}
+              >
+                변경
+              </PillButton>
             </div>
           </div>
         </UtilityCard>
       </div>
 
-      {/* 우측: 감시 동작, 자동 보관 기간(자동 삭제) 및 트레이 상주 설정 */}
-      <div className="col-span-6 min-h-0">
+      {/* 우측: 감시·시스템 동작 카드 + 자동 보관(삭제) 카드 (좌우 대칭 2단 구조) */}
+      <div className="col-span-6 min-h-0 flex flex-col gap-4">
         <UtilityCard
-          title="감시 동작 및 자동 보관(삭제) 설정"
+          title="감시 및 시스템 동작"
           rightAction={
-            <>
-              <PillButton variant="pearl-capsule" size="sm" onClick={() => void onRunCleanupNow()}>
-                <Sparkles className="w-3.5 h-3.5 text-[#0066cc]" />
-                <span>지금 정리</span>
-              </PillButton>
-              <PillButton variant="primary" size="sm" onClick={() => void onSaveConfig(draft)}>
-                <Save className="w-3.5 h-3.5" />
-                <span>설정 저장</span>
-              </PillButton>
-            </>
+            <PillButton variant="primary" size="sm" onClick={() => void onSaveConfig(draft)}>
+              <Save className="w-3.5 h-3.5" />
+              <span>설정 저장</span>
+            </PillButton>
           }
-          className="h-full"
+          className="shrink-0"
+        >
+          <div className="rounded-[14px] bg-[#f5f5f7] border border-[#e0e0e0] divide-y divide-[#e0e0e0]">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div>
+                <div className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+                  파일 쓰기 완료 대기 시간
+                </div>
+                <div className="text-[11px] text-[#7a7a7a] whitespace-nowrap">
+                  수신 파일이 완전히 기록될 때까지 대기
+                </div>
+              </div>
+              <SegmentedControl
+                options={SLEEP_OPTIONS}
+                value={draft.watcher.writeStabilitySec}
+                onChange={(val) =>
+                  setDraft({
+                    ...draft,
+                    watcher: { ...draft.watcher, writeStabilitySec: val },
+                  })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div>
+                <div className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+                  시작 시 미처리 파일 자동 점검
+                </div>
+                <div className="text-[11px] text-[#7a7a7a] whitespace-nowrap">
+                  프로그램 실행 시 폴더 내 잔여 파일 변환
+                </div>
+              </div>
+              <SegmentedControl
+                options={BOOL_SCAN_OPTIONS}
+                value={draft.watcher.scanExistingOnStart}
+                onChange={(val) =>
+                  setDraft({
+                    ...draft,
+                    watcher: { ...draft.watcher, scanExistingOnStart: val },
+                  })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div>
+                <div className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+                  비규격 파일 처리 방식
+                </div>
+                <div className="text-[11px] text-[#7a7a7a] whitespace-nowrap">
+                  아규격 형식이 아닌 파일 유입 시 동작
+                </div>
+              </div>
+              <SegmentedControl
+                options={POLICY_OPTIONS}
+                value={draft.watcher.invalidFilePolicy}
+                onChange={(val) =>
+                  setDraft({
+                    ...draft,
+                    watcher: { ...draft.watcher, invalidFilePolicy: val },
+                  })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <div>
+                <div className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+                  창 닫기 버튼 클릭 시 동작
+                </div>
+                <div className="text-[11px] text-[#7a7a7a] whitespace-nowrap">
+                  트레이 아이콘 우클릭으로 완전 종료 가능
+                </div>
+              </div>
+              <SegmentedControl
+                options={CLOSE_OPTIONS}
+                value={draft.system.minimizeToTrayOnClose}
+                onChange={(val) =>
+                  setDraft({
+                    ...draft,
+                    system: { ...draft.system, minimizeToTrayOnClose: val },
+                  })
+                }
+              />
+            </div>
+          </div>
+        </UtilityCard>
+
+        <UtilityCard
+          title="보관 기간 및 자동 삭제"
+          rightAction={
+            <PillButton variant="pearl-capsule" size="sm" onClick={() => void onRunCleanupNow()}>
+              <Sparkles className="w-3.5 h-3.5 text-[#0066cc]" />
+              <span>지금 정리</span>
+            </PillButton>
+          }
+          className="flex-1 min-h-0"
           bodyClassName="justify-between"
         >
-          <div className="space-y-4 overflow-y-auto pr-1">
-            {/* 1. 감시 대기시간 및 시작 점검 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1.5 whitespace-nowrap">
-                  파일 쓰기 완료 대기 시간 (초)
-                </label>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={draft.watcher.writeStabilitySec}
-                  onChange={(e) =>
-                    setDraft({
-                      ...draft,
-                      watcher: {
-                        ...draft.watcher,
-                        writeStabilitySec: Math.max(1, Number(e.target.value) || 1),
-                      },
-                    })
-                  }
-                  className="w-full h-[32px] px-3.5 rounded-[10px] bg-[#f5f5f7] border border-[#e0e0e0] text-[13px]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1.5 whitespace-nowrap">
-                  시작 시 미처리 파일 자동 점검
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <OptionChip
-                    selected={draft.watcher.scanExistingOnStart}
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        watcher: { ...draft.watcher, scanExistingOnStart: true },
-                      })
-                    }
-                  >
-                    사용함
-                  </OptionChip>
-                  <OptionChip
-                    selected={!draft.watcher.scanExistingOnStart}
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        watcher: { ...draft.watcher, scanExistingOnStart: false },
-                      })
-                    }
-                  >
-                    사용 안 함
-                  </OptionChip>
-                </div>
-              </div>
+          <div className="rounded-[14px] bg-[#f5f5f7] border border-[#e0e0e0] divide-y divide-[#e0e0e0]">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+                로그 파일 보관 기간
+              </span>
+              <SegmentedControl
+                options={LOG_RETENTION_OPTIONS}
+                value={draft.retention.logDays}
+                onChange={(val) =>
+                  setDraft({
+                    ...draft,
+                    retention: { ...draft.retention, logDays: val },
+                  })
+                }
+              />
             </div>
 
-            {/* 2. 비규격 파일 처리 및 창 닫기 트레이 상주 */}
-            <div className="grid grid-cols-2 gap-4 pt-3 border-t border-[#e0e0e0]">
-              <div>
-                <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1.5 whitespace-nowrap">
-                  비규격 파일 처리 방식
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <OptionChip
-                    selected={draft.watcher.invalidFilePolicy === 'ignore'}
-                    onClick={() => setPolicy('ignore')}
-                  >
-                    보존
-                  </OptionChip>
-                  <OptionChip
-                    selected={draft.watcher.invalidFilePolicy === 'quarantine'}
-                    onClick={() => setPolicy('quarantine')}
-                  >
-                    격리 이동
-                  </OptionChip>
-                  <OptionChip
-                    selected={draft.watcher.invalidFilePolicy === 'delete'}
-                    onClick={() => setPolicy('delete')}
-                  >
-                    즉시 삭제
-                  </OptionChip>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1.5 whitespace-nowrap">
-                  창 닫기 버튼 클릭 시 동작
-                </label>
-                <div className="flex items-center gap-1.5">
-                  <OptionChip
-                    selected={draft.system.minimizeToTrayOnClose}
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        system: { ...draft.system, minimizeToTrayOnClose: true },
-                      })
-                    }
-                  >
-                    트레이로 숨김
-                  </OptionChip>
-                  <OptionChip
-                    selected={!draft.system.minimizeToTrayOnClose}
-                    onClick={() =>
-                      setDraft({
-                        ...draft,
-                        system: { ...draft.system, minimizeToTrayOnClose: false },
-                      })
-                    }
-                  >
-                    프로그램 종료
-                  </OptionChip>
-                </div>
-              </div>
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+                단속 변환 이력 보관 기간
+              </span>
+              <SegmentedControl
+                options={DB_RETENTION_OPTIONS}
+                value={draft.retention.dbHistoryDays}
+                onChange={(val) =>
+                  setDraft({
+                    ...draft,
+                    retention: { ...draft.retention, dbHistoryDays: val },
+                  })
+                }
+              />
             </div>
 
-            {/* 3. 보관 기간 및 자동 삭제 설정 */}
-            <div className="pt-3 border-t border-[#e0e0e0] space-y-3">
-              <div>
-                <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1.5 whitespace-nowrap">
-                  로그 파일 자동 삭제 보관 기간
-                </label>
-                <div className="flex items-center gap-1.5">
-                  {LOG_RETENTION_OPTIONS.map((opt) => (
-                    <OptionChip
-                      key={opt.value}
-                      selected={draft.retention.logDays === opt.value}
-                      onClick={() =>
-                        setDraft({
-                          ...draft,
-                          retention: { ...draft.retention, logDays: opt.value },
-                        })
-                      }
-                    >
-                      {opt.label}
-                    </OptionChip>
-                  ))}
-                </div>
-              </div>
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+                결과 폴더 미수거 파일 보관
+              </span>
+              <SegmentedControl
+                options={RESULT_RETENTION_OPTIONS}
+                value={draft.retention.resultDays}
+                onChange={(val) =>
+                  setDraft({
+                    ...draft,
+                    retention: { ...draft.retention, resultDays: val },
+                  })
+                }
+              />
+            </div>
 
-              <div>
-                <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1.5 whitespace-nowrap">
-                  단속 변환 이력 자동 삭제 보관 기간
-                </label>
-                <div className="flex items-center gap-1.5">
-                  {DB_RETENTION_OPTIONS.map((opt) => (
-                    <OptionChip
-                      key={opt.value}
-                      selected={draft.retention.dbHistoryDays === opt.value}
-                      onClick={() =>
-                        setDraft({
-                          ...draft,
-                          retention: { ...draft.retention, dbHistoryDays: opt.value },
-                        })
-                      }
-                    >
-                      {opt.label}
-                    </OptionChip>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-[12px] font-semibold text-[#7a7a7a] mb-1.5 whitespace-nowrap">
-                  변환 결과 폴더 미수거 파일 보관 기간 (격리 폴더는 {draft.retention.quarantineDays}일 보관)
-                </label>
-                <div className="flex items-center gap-1.5">
-                  {RESULT_RETENTION_OPTIONS.map((opt) => (
-                    <OptionChip
-                      key={opt.value}
-                      selected={draft.retention.resultDays === opt.value}
-                      onClick={() =>
-                        setDraft({
-                          ...draft,
-                          retention: { ...draft.retention, resultDays: opt.value },
-                        })
-                      }
-                    >
-                      {opt.label}
-                    </OptionChip>
-                  ))}
-                </div>
-              </div>
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+              <span className="text-[13px] font-semibold text-[#1d1d1f] whitespace-nowrap">
+                격리 폴더 파일 보관 기간
+              </span>
+              <SegmentedControl
+                options={QUARANTINE_RETENTION_OPTIONS}
+                value={draft.retention.quarantineDays}
+                onChange={(val) =>
+                  setDraft({
+                    ...draft,
+                    retention: { ...draft.retention, quarantineDays: val },
+                  })
+                }
+              />
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#e0e0e0] text-[12px] text-[#7a7a7a] flex items-center justify-between shrink-0">
-            <span>작업표시줄 트레이 아이콘 우클릭 시 [프로그램 완전 종료]를 실행할 수 있습니다.</span>
+          <div className="text-[12px] text-[#7a7a7a] flex items-center justify-between px-1 pt-2">
+            <span>보관 기간이 지난 파일과 이력은 매시간 자동으로 정리됩니다.</span>
+            <span className="font-semibold text-[#333333]">설정 변경 후 [설정 저장] 클릭</span>
           </div>
         </UtilityCard>
       </div>
