@@ -21,6 +21,7 @@ extraFiles:
   - from: "config.json"
     to: "config.json"
 win:
+  icon: resources/icon.ico
   signAndEditExecutable: false
   target:
     - target: nsis
