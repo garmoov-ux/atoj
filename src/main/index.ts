@@ -18,7 +18,7 @@ function createMainWindow(): BrowserWindow {
     show: false,
     autoHideMenuBar: true,
     backgroundColor: '#f5f5f7',
-    title: 'AtoJ — 무인교통단속장비 아규격·자규격(.DAT) 실시간 변환 관제',
+    title: 'AtoJ - 무인교통단속장비 간이서버(아규격->자규격) 시스템',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
