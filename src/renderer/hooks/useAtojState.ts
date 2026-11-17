@@ -35,15 +35,33 @@ export function useAtojState() {
   }, [toastMessage]);
 
   const refreshInitial = useCallback(async () => {
-    const [sumRes, cfgRes, histRes] = await Promise.all([
-      window.atojApi.getSummary(),
-      window.atojApi.getConfig(),
-      window.atojApi.queryHistory({ limit: 20, offset: 0 }),
-    ]);
+    try {
+      const [sumRes, cfgRes, histRes] = await Promise.all([
+        window.atojApi.getSummary(),
+        window.atojApi.getConfig(),
+        window.atojApi.queryHistory({ limit: 30, offset: 0 }),
+      ]);
 
-    if (sumRes.success && sumRes.data) setSummary(sumRes.data);
-    if (cfgRes.success && cfgRes.data) setConfig(cfgRes.data);
-    if (histRes.success && histRes.data) setRecentRecords(histRes.data.items);
+      if (sumRes.success && sumRes.data) setSummary(sumRes.data);
+      if (cfgRes.success && cfgRes.data) setConfig(cfgRes.data);
+      if (histRes.success && histRes.data) {
+        setRecentRecords(histRes.data.items);
+        const latestSuccess = histRes.data.items.find((r) => r.status === 'SUCCESS');
+        if (typeof window.atojApi.inspectRecord === 'function') {
+          const latestRes = await window.atojApi.inspectRecord();
+          if (latestRes.success && latestRes.data) {
+            setInspected((prev) => prev ?? latestRes.data ?? null);
+          }
+        } else if (latestSuccess?.targetPath) {
+          const fallbackRes = await window.atojApi.inspectBinaryFile(latestSuccess.targetPath);
+          if (fallbackRes.success && fallbackRes.data) {
+            setInspected((prev) => prev ?? fallbackRes.data ?? null);
+          }
+        }
+      }
+    } catch {
+      // 초기 로드 중 일부 채널 미준비 시 무시
+    }
   }, []);
 
   useEffect(() => {
@@ -51,6 +69,13 @@ export function useAtojState() {
 
     const unsubConversion = window.atojApi.onConversionEvent((record) => {
       setRecentRecords((prev) => [record, ...prev.slice(0, 49)]);
+      if (record.status === 'SUCCESS' && typeof window.atojApi.inspectRecord === 'function') {
+        void window.atojApi.inspectRecord(record.id).then((res) => {
+          if (res.success && res.data) {
+            setInspected((prev) => prev ?? res.data ?? null);
+          }
+        });
+      }
     });
 
     const unsubSummary = window.atojApi.onSummaryUpdated((nextSummary) => {
@@ -118,6 +143,30 @@ export function useAtojState() {
     [showToast],
   );
 
+  const inspectRecordById = useCallback(
+    async (recordId?: number): Promise<boolean> => {
+      if (typeof window.atojApi.inspectRecord === 'function') {
+        const res = await window.atojApi.inspectRecord(recordId);
+        if (res.success && res.data) {
+          setInspected(res.data);
+          return true;
+        }
+        if (res.error) {
+          showToast(`단속 데이터 열람 실패: ${res.error}`);
+        }
+        return false;
+      }
+      const target = recordId
+        ? recentRecords.find((r) => r.id === recordId)
+        : recentRecords.find((r) => r.status === 'SUCCESS');
+      if (target?.targetPath) {
+        return inspectFileByPath(target.targetPath);
+      }
+      return false;
+    },
+    [recentRecords, inspectFileByPath, showToast],
+  );
+
   const selectAndInspectFile = useCallback(async (): Promise<boolean> => {
     const pick = await window.atojApi.selectInspectFile();
     if (!pick.success || !pick.data) return false;
@@ -131,15 +180,16 @@ export function useAtojState() {
     const conv = await window.atojApi.convertSingleFile(pick.data);
     if (conv.success && conv.data) {
       showToast(`자규격 변환 완료: ${conv.data.targetFileName}`);
-      if (conv.data.targetPath) {
+      const ok = await inspectRecordById(conv.data.id);
+      if (!ok && conv.data.targetPath) {
         await inspectFileByPath(conv.data.targetPath);
-        return conv.data.targetPath;
       }
+      return conv.data.targetPath || conv.data.sourcePath;
     } else {
       showToast(`변환 실패: ${conv.error || '오류 발생'}`);
     }
     return null;
-  }, [inspectFileByPath, showToast]);
+  }, [inspectRecordById, inspectFileByPath, showToast]);
 
   return {
     summary,
@@ -152,6 +202,7 @@ export function useAtojState() {
     scanNow,
     saveConfig,
     runRetentionCleanupNow,
+    inspectRecordById,
     inspectFileByPath,
     selectAndInspectFile,
     manualConvertSingleFile,

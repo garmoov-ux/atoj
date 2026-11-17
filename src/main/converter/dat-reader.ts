@@ -36,6 +36,9 @@ export function inspectBinaryFile(filePath: string): DatInspectionResult {
     const rawTime17 = `${header.enfDate}${header.enfTime}000`;
 
     return {
+      rawHeader: header,
+      deviceCode: header.deviceCode,
+      fileStatus: 'AVAILABLE',
       fileName,
       filePath: resolved,
       fileSize: buf.length,

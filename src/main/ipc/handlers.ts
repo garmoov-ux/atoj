@@ -1,10 +1,14 @@
-import { dialog, ipcMain, type BrowserWindow } from 'electron';
-import { toPortableRelativeIfInsideBase } from '../config/app-paths';
+import fs from 'node:fs';
+import { dialog, ipcMain, shell, type BrowserWindow } from 'electron';
+import { resolveAppPath, toPortableRelativeIfInsideBase } from '../config/app-paths';
 import type { ConfigManager } from '../config/config-manager';
 import type { ConversionRepository } from '../db/conversion-repo';
+import { getMonthlyStatsReport, getStorageFoldersInfo } from '../db/stats-repo';
 import type { FolderWatcherService } from '../watcher/folder-watcher';
 import type { RetentionCleanerService } from '../watcher/retention-cleaner';
 import { inspectBinaryFile } from '../converter/dat-reader';
+import { inspectConversionRecord } from '../converter/snapshot-archive';
+import { generateMonthlyReportPdf } from '../report/pdf-report-generator';
 import { IPC_CHANNELS, type IpcResult } from '@shared/ipc-channels';
 import type { AtojAppConfig, HistoryQueryFilter } from '@shared/types/domain';
 
@@ -28,6 +32,51 @@ export function registerIpcHandlers(
 ): void {
   ipcMain.handle(IPC_CHANNELS.GET_SUMMARY, () =>
     wrapIpc(() => watcherService.getSummary()),
+  );
+
+  ipcMain.handle(IPC_CHANNELS.GET_RECENT_LOGS, (_event, limit?: number) =>
+    wrapIpc(() => watcherService.getLogger().readRecentLogs(limit ?? 300)),
+  );
+
+  ipcMain.handle(IPC_CHANNELS.GET_MONTHLY_STATS, (_event, yearMonth?: string) =>
+    wrapIpc(() => getMonthlyStatsReport(repo.getDatabase(), yearMonth)),
+  );
+
+  ipcMain.handle(IPC_CHANNELS.EXPORT_MONTHLY_PDF, async (_event, yearMonth: string) =>
+    wrapIpc(async () => {
+      const win = mainWindowGetter();
+      const report = getMonthlyStatsReport(repo.getDatabase(), yearMonth);
+      const saveRes = await dialog.showSaveDialog(win!, {
+        title: '발주처 제출용 월간 통계 PDF 보고서 저장',
+        defaultPath: `AtoJ_월간단속변환보고서_${report.yearMonth}.pdf`,
+        filters: [{ name: 'PDF 문서 (*.pdf)', extensions: ['pdf'] }],
+      });
+
+      if (saveRes.canceled || !saveRes.filePath) {
+        throw new Error('PDF 보고서 저장이 취소되었습니다.');
+      }
+
+      await generateMonthlyReportPdf(report, saveRes.filePath);
+      watcherService
+        .getLogger()
+        .write('시스템', '정보', `월간 단속 변환 통계 PDF 보고서 출력 완료 | 대상연월: ${report.yearMonth} | 저장경로: ${saveRes.filePath}`);
+      return { filePath: saveRes.filePath };
+    }),
+  );
+
+  ipcMain.handle(IPC_CHANNELS.GET_STORAGE_INFO, () =>
+    wrapIpc(() => getStorageFoldersInfo(configManager.loadConfig())),
+  );
+
+  ipcMain.handle(IPC_CHANNELS.OPEN_FOLDER_PATH, async (_event, targetPath: string) =>
+    wrapIpc(async () => {
+      const resolved = resolveAppPath(targetPath);
+      if (!fs.existsSync(resolved)) {
+        fs.mkdirSync(resolved, { recursive: true });
+      }
+      await shell.openPath(resolved);
+      return { opened: resolved };
+    }),
   );
 
   ipcMain.handle(IPC_CHANNELS.QUERY_HISTORY, (_event, filter: HistoryQueryFilter) =>
@@ -105,7 +154,23 @@ export function registerIpcHandlers(
   );
 
   ipcMain.handle(IPC_CHANNELS.INSPECT_BINARY_FILE, (_event, filePath: string) =>
-    wrapIpc(() => inspectBinaryFile(filePath)),
+    wrapIpc(() => {
+      const matchedRecord = repo.findByFilePath(filePath);
+      if (matchedRecord) {
+        const nav = repo.getNavigationMeta(matchedRecord.id);
+        return inspectConversionRecord(matchedRecord, nav);
+      }
+      return inspectBinaryFile(filePath);
+    }),
+  );
+
+  ipcMain.handle(IPC_CHANNELS.INSPECT_RECORD, (_event, recordId?: number) =>
+    wrapIpc(() => {
+      const record = recordId ? repo.getById(recordId) : repo.getLatestSuccess();
+      if (!record) return null;
+      const nav = repo.getNavigationMeta(record.id);
+      return inspectConversionRecord(record, nav);
+    }),
   );
 
   ipcMain.handle(IPC_CHANNELS.CONVERT_SINGLE_FILE, async (_event, filePath: string) =>

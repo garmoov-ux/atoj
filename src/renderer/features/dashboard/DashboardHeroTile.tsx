@@ -7,47 +7,73 @@ interface DashboardHeroTileProps {
 
 export const DashboardHeroTile: React.FC<DashboardHeroTileProps> = ({ summary }) => {
   const kpis = [
-    { label: '오늘 변환', value: summary.todayConverted.toLocaleString(), accent: true },
-    { label: '누적 완료', value: summary.totalConverted.toLocaleString(), accent: false },
-    { label: '속도위반', value: summary.speedCount.toLocaleString(), accent: false },
-    { label: '신호위반', value: summary.signalCount.toLocaleString(), accent: false },
-    { label: '변환 실패', value: summary.failedCount.toLocaleString(), accent: false },
+    {
+      label: '오늘 변환 완료',
+      value: summary.todayConverted.toLocaleString(),
+      tone: 'primary' as const,
+    },
+    {
+      label: '누적 변환 완료',
+      value: summary.totalConverted.toLocaleString(),
+      tone: 'default' as const,
+    },
+    {
+      label: '속도위반 (코드1)',
+      value: summary.speedCount.toLocaleString(),
+      tone: 'amber' as const,
+    },
+    {
+      label: '신호위반 (코드3)',
+      value: summary.signalCount.toLocaleString(),
+      tone: 'rose' as const,
+    },
+    {
+      label: '변환 오류',
+      value: summary.failedCount.toLocaleString(),
+      tone: 'muted' as const,
+    },
   ];
 
   return (
-    <div className="grid grid-cols-5 gap-3.5 shrink-0">
-      {kpis.map((item) => (
-        <div
-          key={item.label}
-          className={`rounded-[16px] px-5 py-4 flex items-center justify-between border ${
-            item.accent
-              ? 'bg-[#272729] text-white border-[#3a3a3c]'
-              : 'bg-[#ffffff] text-[#1d1d1f] border-[#e0e0e0]'
-          }`}
-        >
-          <span
-            className={`text-[14px] font-medium whitespace-nowrap ${
-              item.accent ? 'text-[#cccccc]' : 'text-[#7a7a7a]'
+    <div className="grid grid-cols-5 gap-2.5 shrink-0">
+      {kpis.map((item) => {
+        const isPrimary = item.tone === 'primary';
+        const valColor =
+          item.tone === 'primary'
+            ? 'text-[#38bdf8]'
+            : item.tone === 'amber'
+              ? 'text-[#d97706]'
+              : item.tone === 'rose'
+                ? 'text-[#e11d48]'
+                : 'text-[#0f172a]';
+
+        return (
+          <div
+            key={item.label}
+            className={`rounded-[10px] px-3.5 py-2.5 flex items-center justify-between border ${
+              isPrimary
+                ? 'bg-[#0f172a] text-white border-[#1e293b]'
+                : 'bg-[#ffffff] text-[#0f172a] border-[#cbd5e1]'
             }`}
           >
-            {item.label}
-          </span>
-          <div className="flex items-baseline gap-1 whitespace-nowrap">
             <span
-              className={`text-[26px] font-semibold tracking-[-0.02em] leading-none ${
-                item.accent ? 'text-[#2997ff]' : 'text-[#1d1d1f]'
+              className={`text-[12.5px] font-medium whitespace-nowrap ${
+                isPrimary ? 'text-slate-300' : 'text-[#64748b]'
               }`}
             >
-              {item.value}
+              {item.label}
             </span>
-            <span
-              className={`text-[13px] ${item.accent ? 'text-[#cccccc]' : 'text-[#7a7a7a]'}`}
-            >
-              건
-            </span>
+            <div className="flex items-baseline gap-1 whitespace-nowrap">
+              <span className={`text-[21px] font-bold tracking-[-0.02em] leading-none ${valColor}`}>
+                {item.value}
+              </span>
+              <span className={`text-[11.5px] ${isPrimary ? 'text-slate-400' : 'text-[#64748b]'}`}>
+                건
+              </span>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

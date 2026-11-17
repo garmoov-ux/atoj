@@ -1,6 +1,6 @@
 {
   "name": "atoj",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "무인교통단속장비 아규격 -> 자규격(.DAT) 실시간 변환 및 관제 데스크톱 애플리케이션",
   "main": "./out/main/index.js",
   "author": "㈜이노네트웍스 강홍선 <s_gain@naver.com>",

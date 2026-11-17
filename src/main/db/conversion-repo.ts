@@ -12,6 +12,8 @@ export interface InsertConversionInput {
   sourceFileName: string;
   targetPath: string | null;
   targetFileName: string | null;
+  snapshotPath?: string | null;
+  headerJson?: string | null;
   deviceCode: string;
   carNum: string;
   enfCode: string;
@@ -25,12 +27,21 @@ export interface InsertConversionInput {
   errorMessage: string | null;
 }
 
+export interface RecordNavigationMeta {
+  prevRecordId: number | null;
+  nextRecordId: number | null;
+  currentPosition: number;
+  totalSuccessCount: number;
+}
+
 interface RawRow {
   id: number;
   source_path: string;
   source_file_name: string;
   target_path: string | null;
   target_file_name: string | null;
+  snapshot_path?: string | null;
+  header_json?: string | null;
   device_code: string;
   car_num: string;
   enf_code: string;
@@ -52,6 +63,8 @@ function mapRow(row: RawRow): ConversionRecord {
     sourceFileName: row.source_file_name,
     targetPath: row.target_path,
     targetFileName: row.target_file_name,
+    snapshotPath: row.snapshot_path ?? null,
+    headerJson: row.header_json ?? null,
     deviceCode: row.device_code,
     carNum: row.car_num,
     enfCode: row.enf_code,
@@ -74,23 +87,92 @@ export class ConversionRepository {
     this.db = db;
   }
 
+  public getDatabase(): Database.Database {
+    return this.db;
+  }
+
   public insert(input: InsertConversionInput): ConversionRecord {
     const stmt = this.db.prepare(`
       INSERT INTO conversion_history (
         source_path, source_file_name, target_path, target_file_name,
+        snapshot_path, header_json,
         device_code, car_num, enf_code, enf_speed, lane, car_type,
         violation_time, image_count, file_size, status, error_message
       ) VALUES (
         @sourcePath, @sourceFileName, @targetPath, @targetFileName,
+        @snapshotPath, @headerJson,
         @deviceCode, @carNum, @enfCode, @enfSpeed, @lane, @carType,
         @violationTime, @imageCount, @fileSize, @status, @errorMessage
       )
     `);
 
-    const info = stmt.run(input);
+    const info = stmt.run({
+      ...input,
+      snapshotPath: input.snapshotPath ?? null,
+      headerJson: input.headerJson ?? null,
+    });
     const getStmt = this.db.prepare('SELECT * FROM conversion_history WHERE id = ?');
     const row = getStmt.get(info.lastInsertRowid) as RawRow;
     return mapRow(row);
+  }
+
+  public getById(id: number): ConversionRecord | null {
+    const row = this.db
+      .prepare('SELECT * FROM conversion_history WHERE id = ?')
+      .get(id) as RawRow | undefined;
+    return row ? mapRow(row) : null;
+  }
+
+  public getLatestSuccess(): ConversionRecord | null {
+    const row = this.db
+      .prepare("SELECT * FROM conversion_history WHERE status = 'SUCCESS' ORDER BY id DESC LIMIT 1")
+      .get() as RawRow | undefined;
+    return row ? mapRow(row) : null;
+  }
+
+  public findByFilePath(filePath: string): ConversionRecord | null {
+    const resolved = path.resolve(filePath);
+    const base = path.basename(resolved);
+    const row = this.db
+      .prepare(
+        `SELECT * FROM conversion_history
+         WHERE target_path = @resolved OR snapshot_path = @resolved OR source_path = @resolved
+            OR target_file_name = @base OR source_file_name = @base
+         ORDER BY id DESC LIMIT 1`,
+      )
+      .get({ resolved, base }) as RawRow | undefined;
+    return row ? mapRow(row) : null;
+  }
+
+  public getNavigationMeta(recordId: number): RecordNavigationMeta {
+    const prevRow = this.db
+      .prepare(
+        "SELECT id FROM conversion_history WHERE status = 'SUCCESS' AND id < ? ORDER BY id DESC LIMIT 1",
+      )
+      .get(recordId) as { id: number } | undefined;
+
+    const nextRow = this.db
+      .prepare(
+        "SELECT id FROM conversion_history WHERE status = 'SUCCESS' AND id > ? ORDER BY id ASC LIMIT 1",
+      )
+      .get(recordId) as { id: number } | undefined;
+
+    const totalRow = this.db
+      .prepare("SELECT COUNT(*) as cnt FROM conversion_history WHERE status = 'SUCCESS'")
+      .get() as { cnt: number };
+
+    const newerOrEqualRow = this.db
+      .prepare(
+        "SELECT COUNT(*) as cnt FROM conversion_history WHERE status = 'SUCCESS' AND id >= ?",
+      )
+      .get(recordId) as { cnt: number };
+
+    return {
+      prevRecordId: prevRow?.id ?? null,
+      nextRecordId: nextRow?.id ?? null,
+      currentPosition: newerOrEqualRow?.cnt ?? 1,
+      totalSuccessCount: totalRow?.cnt ?? 0,
+    };
   }
 
   public query(filter: HistoryQueryFilter): HistoryQueryResult {

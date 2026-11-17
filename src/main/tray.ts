@@ -128,7 +128,7 @@ export class TrayManager {
 
     const icon = createAtojAppIcon(32);
     this.tray = new Tray(icon);
-    this.tray.setToolTip('AtoJ - 무인교통단속장비 간이서버(아규격->자규격) 시스템');
+    this.tray.setToolTip('AtoJ - 무인교통단속장비 규격 변환기');
 
     this.tray.on('click', () => {
       this.showMainWindow();
@@ -163,7 +163,7 @@ export class TrayManager {
     const summary = this.watcher.getSummary();
     const menu = Menu.buildFromTemplate([
       {
-        label: 'AtoJ 간이서버 창 열기',
+        label: 'AtoJ 변환기 창 열기',
         click: () => this.showMainWindow(),
       },
       { type: 'separator' },

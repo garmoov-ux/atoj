@@ -15,10 +15,10 @@ export const OptionChip: React.FC<OptionChipProps> = ({
     <button
       type="button"
       onClick={onClick}
-      className={`h-[34px] px-4 rounded-full text-[13px] whitespace-nowrap shrink-0 transition-transform duration-150 active:scale-95 cursor-pointer select-none ${
+      className={`h-[29px] px-3 rounded-[6px] text-[12px] whitespace-nowrap shrink-0 transition-all duration-150 active:scale-95 cursor-pointer select-none ${
         selected
-          ? 'bg-[#0066cc] text-white font-semibold border border-[#0066cc]'
-          : 'bg-[#f5f5f7] text-[#333333] font-normal border border-[#e0e0e0]'
+          ? 'bg-[#2563eb] text-white font-semibold border border-[#2563eb]'
+          : 'bg-[#f8fafc] hover:bg-[#f1f5f9] text-[#334155] font-medium border border-[#cbd5e1]'
       }`}
     >
       {children}

@@ -76,6 +76,8 @@ export interface ConversionRecord {
   sourceFileName: string;
   targetPath: string | null;
   targetFileName: string | null;
+  snapshotPath?: string | null;
+  headerJson?: string | null;
   deviceCode: string;
   carNum: string;
   enfCode: string;
@@ -116,7 +118,20 @@ export interface HistoryQueryResult {
   total: number;
 }
 
+export type InspectedFileStatus = 'AVAILABLE' | 'EXPORTED_SNAPSHOT' | 'DB_METADATA_ONLY';
+
 export interface DatInspectionResult {
+  recordId?: number;
+  sourceFileName?: string;
+  targetFileName?: string | null;
+  deviceCode?: string;
+  createdAt?: string;
+  fileStatus?: InspectedFileStatus;
+  rawHeader?: AverHeader | null;
+  prevRecordId?: number | null;
+  nextRecordId?: number | null;
+  currentPosition?: number;
+  totalSuccessCount?: number;
   fileName: string;
   filePath: string;
   fileSize: number;
@@ -144,4 +159,58 @@ export interface DatInspectionResult {
   carImageBase64: string | null;
   plateImageBase64: string | null;
   trackingImagesBase64: string[];
+}
+
+export interface LogEntry {
+  id: string;
+  timestamp: string;
+  category: string;
+  level: string;
+  message: string;
+  fileName: string;
+}
+
+export interface DailyStatItem {
+  day: string;
+  label: string;
+  totalCount: number;
+  speedCount: number;
+  signalCount: number;
+  failedCount: number;
+}
+
+export interface DeviceStatItem {
+  deviceCode: string;
+  totalCount: number;
+  speedCount: number;
+  signalCount: number;
+  avgSpeed: number;
+  maxSpeed: number;
+}
+
+export interface MonthlyStatsReport {
+  yearMonth: string;
+  availableMonths: string[];
+  totalProcessed: number;
+  totalSuccess: number;
+  totalFailed: number;
+  totalSkipped: number;
+  speedCount: number;
+  signalCount: number;
+  avgSpeed: number;
+  maxSpeed: number;
+  activeDeviceCount: number;
+  dailyStats: DailyStatItem[];
+  deviceStats: DeviceStatItem[];
+}
+
+export interface StorageFolderItem {
+  key: 'base' | 'target' | 'log' | 'data' | 'quarantine';
+  label: string;
+  description: string;
+  relativePath: string;
+  resolvedPath: string;
+  exists: boolean;
+  fileCount: number;
+  totalBytes: number;
 }

@@ -43,6 +43,7 @@ export class RetentionCleanerService {
 
     const deletedLogs = this.deleteOldFilesInDir(paths.logDir, retention.logDays, ['.log']);
     const deletedDbRows = this.repo.purgeOlderThanDays(retention.dbHistoryDays);
+    this.deleteOldFilesInDir('./data/snapshots', retention.dbHistoryDays, ['.dat']);
     const deletedResults = this.deleteOldFilesInDir(paths.targetDir, retention.resultDays, ['.dat']);
     const deletedQuarantines = this.deleteOldFilesInDir(
       paths.quarantineDir,

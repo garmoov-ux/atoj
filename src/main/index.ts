@@ -19,17 +19,17 @@ let isQuitting = false;
 function createMainWindow(): BrowserWindow {
   const appIcon = createAtojAppIcon(64);
   const win = new BrowserWindow({
-    width: 1360,
-    height: 860,
+    width: 1040,
+    height: 680,
     useContentSize: true,
     resizable: false,
     maximizable: false,
     fullscreenable: false,
     show: false,
     autoHideMenuBar: true,
-    backgroundColor: '#f5f5f7',
+    backgroundColor: '#f1f5f9',
     icon: appIcon,
-    title: 'AtoJ - 무인교통단속장비 간이서버(아규격->자규격) 시스템',
+    title: 'AtoJ - 무인교통단속장비 규격 변환기',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,

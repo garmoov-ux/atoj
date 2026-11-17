@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS conversion_history (
   source_file_name TEXT NOT NULL,
   target_path TEXT,
   target_file_name TEXT,
+  snapshot_path TEXT,
+  header_json TEXT,
   device_code TEXT NOT NULL DEFAULT '-',
   car_num TEXT NOT NULL DEFAULT '-',
   enf_code TEXT NOT NULL DEFAULT '-',
