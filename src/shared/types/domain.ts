@@ -13,9 +13,29 @@ export interface AtojWatcherConfig {
   invalidFilePolicy: InvalidFilePolicy;
 }
 
+export interface AtojRetentionConfig {
+  logDays: number;
+  dbHistoryDays: number;
+  resultDays: number;
+  quarantineDays: number;
+}
+
+export interface AtojSystemConfig {
+  minimizeToTrayOnClose: boolean;
+}
+
 export interface AtojAppConfig {
   paths: AtojPathsConfig;
   watcher: AtojWatcherConfig;
+  retention: AtojRetentionConfig;
+  system: AtojSystemConfig;
+}
+
+export interface RetentionCleanupResult {
+  deletedLogs: number;
+  deletedDbRows: number;
+  deletedResults: number;
+  deletedQuarantines: number;
 }
 
 export interface AverHeader {

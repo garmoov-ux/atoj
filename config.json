@@ -13,5 +13,14 @@
     "writeStabilitySec": 3,
     "scanExistingOnStart": true,
     "invalidFilePolicy": "ignore"
+  },
+  "retention": {
+    "logDays": 30,
+    "dbHistoryDays": 90,
+    "resultDays": 0,
+    "quarantineDays": 14
+  },
+  "system": {
+    "minimizeToTrayOnClose": true
   }
 }

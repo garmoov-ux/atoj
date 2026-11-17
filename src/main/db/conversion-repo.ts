@@ -180,6 +180,16 @@ export class ConversionRepository {
     return info.changes;
   }
 
+  public purgeOlderThanDays(days: number): number {
+    if (days <= 0) return 0;
+    const stmt = this.db.prepare(`
+      DELETE FROM conversion_history
+      WHERE datetime(created_at) < datetime('now', 'localtime', @modifier)
+    `);
+    const info = stmt.run({ modifier: `-${Math.floor(days)} days` });
+    return info.changes;
+  }
+
   public exportToCsv(filter: HistoryQueryFilter, outputPath: string): number {
     const { items } = this.query({ ...filter, limit: 1000, offset: 0 });
     const header = [

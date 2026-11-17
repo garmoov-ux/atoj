@@ -17,6 +17,15 @@ const DEFAULT_CONFIG: AtojAppConfig = {
     scanExistingOnStart: true,
     invalidFilePolicy: (process.env.ATOJ_INVALID_FILE_POLICY as InvalidFilePolicy) || 'ignore',
   },
+  retention: {
+    logDays: 30,
+    dbHistoryDays: 90,
+    resultDays: 0,
+    quarantineDays: 14,
+  },
+  system: {
+    minimizeToTrayOnClose: true,
+  },
 };
 
 export class ConfigManager {
@@ -41,7 +50,6 @@ export class ConfigManager {
       const rawText = fs.readFileSync(this.configPath, 'utf-8');
       const parsed = JSON.parse(rawText);
 
-      // 신규 스키마(paths / watcher) 및 구형 레거시 스키마(path.source / path.sleep) 자동 호환
       const sources = Array.isArray(parsed?.paths?.sources)
         ? parsed.paths.sources
         : Array.isArray(parsed?.path?.source)
@@ -101,6 +109,30 @@ export class ConfigManager {
           scanExistingOnStart,
           invalidFilePolicy,
         },
+        retention: {
+          logDays:
+            typeof parsed?.retention?.logDays === 'number'
+              ? Math.max(0, parsed.retention.logDays)
+              : DEFAULT_CONFIG.retention.logDays,
+          dbHistoryDays:
+            typeof parsed?.retention?.dbHistoryDays === 'number'
+              ? Math.max(0, parsed.retention.dbHistoryDays)
+              : DEFAULT_CONFIG.retention.dbHistoryDays,
+          resultDays:
+            typeof parsed?.retention?.resultDays === 'number'
+              ? Math.max(0, parsed.retention.resultDays)
+              : DEFAULT_CONFIG.retention.resultDays,
+          quarantineDays:
+            typeof parsed?.retention?.quarantineDays === 'number'
+              ? Math.max(0, parsed.retention.quarantineDays)
+              : DEFAULT_CONFIG.retention.quarantineDays,
+        },
+        system: {
+          minimizeToTrayOnClose:
+            typeof parsed?.system?.minimizeToTrayOnClose === 'boolean'
+              ? parsed.system.minimizeToTrayOnClose
+              : DEFAULT_CONFIG.system.minimizeToTrayOnClose,
+        },
       };
 
       this.ensureDirectories(merged);
@@ -127,6 +159,15 @@ export class ConfigManager {
         writeStabilitySec: Math.max(1, Number(config.watcher.writeStabilitySec) || 3),
         scanExistingOnStart: Boolean(config.watcher.scanExistingOnStart),
         invalidFilePolicy: config.watcher.invalidFilePolicy,
+      },
+      retention: {
+        logDays: Math.max(0, Number(config.retention?.logDays ?? 30)),
+        dbHistoryDays: Math.max(0, Number(config.retention?.dbHistoryDays ?? 90)),
+        resultDays: Math.max(0, Number(config.retention?.resultDays ?? 0)),
+        quarantineDays: Math.max(0, Number(config.retention?.quarantineDays ?? 14)),
+      },
+      system: {
+        minimizeToTrayOnClose: Boolean(config.system?.minimizeToTrayOnClose ?? true),
       },
     };
 

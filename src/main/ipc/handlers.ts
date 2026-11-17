@@ -2,6 +2,7 @@ import { dialog, ipcMain, type BrowserWindow } from 'electron';
 import type { ConfigManager } from '../config/config-manager';
 import type { ConversionRepository } from '../db/conversion-repo';
 import type { FolderWatcherService } from '../watcher/folder-watcher';
+import type { RetentionCleanerService } from '../watcher/retention-cleaner';
 import { inspectBinaryFile } from '../converter/dat-reader';
 import { IPC_CHANNELS, type IpcResult } from '@shared/ipc-channels';
 import type { AtojAppConfig, HistoryQueryFilter } from '@shared/types/domain';
@@ -21,6 +22,8 @@ export function registerIpcHandlers(
   configManager: ConfigManager,
   repo: ConversionRepository,
   watcherService: FolderWatcherService,
+  retentionCleaner: RetentionCleanerService,
+  onConfigUpdated?: (nextConfig: AtojAppConfig) => void,
 ): void {
   ipcMain.handle(IPC_CHANNELS.GET_SUMMARY, () =>
     wrapIpc(() => watcherService.getSummary()),
@@ -42,13 +45,13 @@ export function registerIpcHandlers(
       const win = mainWindowGetter();
       const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
       const saveRes = await dialog.showSaveDialog(win!, {
-        title: '변환 이력 CSV 내보내기',
+        title: '변환 이력 파일 저장',
         defaultPath: `AtoJ_변환이력_${today}.csv`,
-        filters: [{ name: 'CSV 파일 (*.csv)', extensions: ['csv'] }],
+        filters: [{ name: '엑셀 호환 파일 (*.csv)', extensions: ['csv'] }],
       });
 
       if (saveRes.canceled || !saveRes.filePath) {
-        throw new Error('내보내기가 취소되었습니다.');
+        throw new Error('파일 저장이 취소되었습니다.');
       }
 
       const count = repo.exportToCsv(filter || {}, saveRes.filePath);
@@ -64,6 +67,8 @@ export function registerIpcHandlers(
     wrapIpc(() => {
       const saved = configManager.saveConfig(newConfig);
       watcherService.updateConfig(saved);
+      retentionCleaner.updateConfig(saved);
+      onConfigUpdated?.(saved);
       return saved;
     }),
   );
@@ -84,7 +89,7 @@ export function registerIpcHandlers(
     wrapIpc(async () => {
       const win = mainWindowGetter();
       const res = await dialog.showOpenDialog(win!, {
-        title: '자규격(.DAT) 또는 아규격 단속 파일 선택',
+        title: '자규격 또는 아규격 단속 파일 선택',
         properties: ['openFile'],
       });
       if (res.canceled || res.filePaths.length === 0) return null;
@@ -125,6 +130,10 @@ export function registerIpcHandlers(
       const scannedCount = watcherService.scanAllSourceFoldersNow();
       return { scannedCount };
     }),
+  );
+
+  ipcMain.handle(IPC_CHANNELS.RUN_RETENTION_CLEANUP, () =>
+    wrapIpc(() => retentionCleaner.runCleanupNow()),
   );
 
   watcherService.onConversion((record) => {

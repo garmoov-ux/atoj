@@ -19,6 +19,7 @@ export const App: React.FC = () => {
     toggleWatcher,
     scanNow,
     saveConfig,
+    runRetentionCleanupNow,
     inspectFileByPath,
     selectAndInspectFile,
     manualConvertSingleFile,
@@ -77,7 +78,11 @@ export const App: React.FC = () => {
         )}
 
         {activeTab === 'settings' && (
-          <SettingsView config={config} onSaveConfig={saveConfig} />
+          <SettingsView
+            config={config}
+            onSaveConfig={saveConfig}
+            onRunCleanupNow={runRetentionCleanupNow}
+          />
         )}
       </main>
 

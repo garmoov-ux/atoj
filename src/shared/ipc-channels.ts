@@ -5,6 +5,7 @@ import type {
   DatInspectionResult,
   HistoryQueryFilter,
   HistoryQueryResult,
+  RetentionCleanupResult,
 } from './types/domain';
 
 export const IPC_CHANNELS = {
@@ -21,6 +22,7 @@ export const IPC_CHANNELS = {
   CONVERT_SINGLE_FILE: 'atoj:convert-single-file',
   TOGGLE_WATCHER: 'atoj:toggle-watcher',
   SCAN_SOURCE_FOLDERS: 'atoj:scan-source-folders',
+  RUN_RETENTION_CLEANUP: 'atoj:run-retention-cleanup',
   EVENT_CONVERSION: 'atoj:event-conversion',
   EVENT_SUMMARY_UPDATED: 'atoj:event-summary-updated',
 } as const;
@@ -44,6 +46,7 @@ export interface AtojElectronApi {
   convertSingleFile: (filePath: string) => Promise<IpcResult<ConversionRecord>>;
   toggleWatcher: (enable: boolean) => Promise<IpcResult<DashboardSummary>>;
   scanSourceFolders: () => Promise<IpcResult<{ scannedCount: number }>>;
+  runRetentionCleanup: () => Promise<IpcResult<RetentionCleanupResult>>;
   onConversionEvent: (callback: (record: ConversionRecord) => void) => () => void;
   onSummaryUpdated: (callback: (summary: DashboardSummary) => void) => () => void;
 }

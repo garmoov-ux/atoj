@@ -74,7 +74,7 @@ export function useAtojState() {
   const scanNow = useCallback(async () => {
     const res = await window.atojApi.scanSourceFolders();
     if (res.success && res.data) {
-      showToast(`수신 폴더 스캔 실행 완료 (대상 파일 ${res.data.scannedCount}개 확인)`);
+      showToast(`수신 폴더 점검 실행 완료 (대상 파일 ${res.data.scannedCount}개 확인)`);
     }
   }, [showToast]);
 
@@ -83,13 +83,27 @@ export function useAtojState() {
       const res = await window.atojApi.saveConfig(nextConfig);
       if (res.success && res.data) {
         setConfig(res.data);
-        showToast('설정을 저장하고 실시간 감시기에 반영했습니다.');
+        showToast('설정을 저장하고 실시간 감시 및 보관 정책에 반영했습니다.');
       } else if (res.error) {
         showToast(`설정 저장 실패: ${res.error}`);
       }
     },
     [showToast],
   );
+
+  const runRetentionCleanupNow = useCallback(async () => {
+    const res = await window.atojApi.runRetentionCleanup();
+    if (res.success && res.data) {
+      const { deletedLogs, deletedDbRows, deletedResults, deletedQuarantines } = res.data;
+      const total = deletedLogs + deletedDbRows + deletedResults + deletedQuarantines;
+      showToast(
+        total > 0
+          ? `자동 정리 완료 (로그 ${deletedLogs}개 · 이력 ${deletedDbRows}건 · 결과 ${deletedResults}개 · 격리 ${deletedQuarantines}개 삭제)`
+          : '정리할 보관 기간 경과 파일이나 이력이 없습니다.',
+      );
+      void refreshInitial();
+    }
+  }, [showToast, refreshInitial]);
 
   const inspectFileByPath = useCallback(
     async (filePath: string): Promise<boolean> => {
@@ -137,6 +151,7 @@ export function useAtojState() {
     toggleWatcher,
     scanNow,
     saveConfig,
+    runRetentionCleanupNow,
     inspectFileByPath,
     selectAndInspectFile,
     manualConvertSingleFile,
