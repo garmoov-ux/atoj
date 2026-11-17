@@ -26,7 +26,7 @@ export const DashboardHeroTile: React.FC<DashboardHeroTileProps> = ({ summary })
           }`}
         >
           <span
-            className={`text-[13px] font-normal whitespace-nowrap ${
+            className={`text-[14px] font-medium whitespace-nowrap ${
               item.accent ? 'text-[#cccccc]' : 'text-[#7a7a7a]'
             }`}
           >
@@ -34,14 +34,14 @@ export const DashboardHeroTile: React.FC<DashboardHeroTileProps> = ({ summary })
           </span>
           <div className="flex items-baseline gap-1 whitespace-nowrap">
             <span
-              className={`text-[24px] font-semibold tracking-[-0.02em] leading-none ${
+              className={`text-[26px] font-semibold tracking-[-0.02em] leading-none ${
                 item.accent ? 'text-[#2997ff]' : 'text-[#1d1d1f]'
               }`}
             >
               {item.value}
             </span>
             <span
-              className={`text-[12px] ${item.accent ? 'text-[#cccccc]' : 'text-[#7a7a7a]'}`}
+              className={`text-[13px] ${item.accent ? 'text-[#cccccc]' : 'text-[#7a7a7a]'}`}
             >
               건
             </span>
