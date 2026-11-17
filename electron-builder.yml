@@ -29,7 +29,10 @@ win:
       arch:
         - x64
 nsis:
+  artifactName: "AtoJ_Setup.exe"
   oneClick: false
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
+portable:
+  artifactName: "AtoJ_Portable.exe"
