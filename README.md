@@ -58,23 +58,26 @@ npm run dist:win
 
 ## 3. 설정 파일 (`config.json`) 규격
 
-실행 파일과 같은 폴더의 `config.json`을 자동으로 읽고 저장하며, 기존 운영 서버의 `config.json`과 100% 호환됩니다.
+경로 설정(`paths`)과 감시 동작 설정(`watcher`)을 역할별로 분리한 명확한 스키마를 사용합니다.
+(기존 구형 `path.source` / `path.sleep` 형식의 `config.json`이 있더라도 자동으로 읽어들여 새 규격으로 마이그레이션합니다.)
 
 ```json
 {
-  "path": {
-    "source": [
+  "paths": {
+    "sources": [
       "C:/save_std2",
       "D:/MuinServer/2_Metafile/Signal",
       "D:/MuinServer/2_Metafile/Speed"
     ],
-    "target": "./result",
-    "log": "./log",
-    "sleep": 3
+    "targetDir": "./result",
+    "logDir": "./log",
+    "quarantineDir": "./quarantine"
   },
-  "invalidFilePolicy": "ignore",
-  "quarantineDir": "./quarantine",
-  "scanExistingOnStart": true
+  "watcher": {
+    "writeStabilitySec": 3,
+    "scanExistingOnStart": true,
+    "invalidFilePolicy": "ignore"
+  }
 }
 ```
 
@@ -89,8 +92,7 @@ AtoJ/
 │   ├── main/                 # Electron Main (config, SQLite DB, 아->자 변환기, chokidar 워처, IPC)
 │   ├── preload/              # ContextBridge 보안 API (window.atojApi)
 │   └── renderer/             # React 19 + Tailwind CSS v4 (DESIGN.md 기반 컴포넌트 모듈)
-├── tests/                    # Python muin.py 100% 바이트 동등성 테스트 및 SQLite 단위 테스트
-├── legacy_src/               # 기존 AtoJ.exe에서 역공학으로 복원한 원본 Python 코드 (app.py, muin.py)
+├── tests/                    # 자규격(.DAT) 바이너리 패킹/역파싱 및 SQLite 단위 테스트
 ├── DESIGN.md                 # UI/UX 디자인 시스템 명세
 ├── AGENTS.md                 # 에이전트 아키텍처 및 코딩 규칙
 └── package.json              # 빌드 및 실행 스크립트

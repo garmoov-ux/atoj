@@ -6,15 +6,17 @@ import type { AtojAppConfig, InvalidFilePolicy } from '@shared/types/domain';
 dotenv.config();
 
 const DEFAULT_CONFIG: AtojAppConfig = {
-  path: {
-    source: ['C:/save_std2', 'D:/MuinServer/2_Metafile/Signal', 'D:/MuinServer/2_Metafile/Speed'],
-    target: './result',
-    log: './log',
-    sleep: 3,
+  paths: {
+    sources: ['C:/save_std2', 'D:/MuinServer/2_Metafile/Signal', 'D:/MuinServer/2_Metafile/Speed'],
+    targetDir: './result',
+    logDir: './log',
+    quarantineDir: process.env.ATOJ_QUARANTINE_DIR || './quarantine',
   },
-  invalidFilePolicy: (process.env.ATOJ_INVALID_FILE_POLICY as InvalidFilePolicy) || 'ignore',
-  quarantineDir: process.env.ATOJ_QUARANTINE_DIR || './quarantine',
-  scanExistingOnStart: true,
+  watcher: {
+    writeStabilitySec: 3,
+    scanExistingOnStart: true,
+    invalidFilePolicy: (process.env.ATOJ_INVALID_FILE_POLICY as InvalidFilePolicy) || 'ignore',
+  },
 };
 
 export class ConfigManager {
@@ -32,38 +34,79 @@ export class ConfigManager {
   public loadConfig(): AtojAppConfig {
     if (!fs.existsSync(this.configPath)) {
       this.saveConfig(DEFAULT_CONFIG);
-      return { ...DEFAULT_CONFIG };
+      return structuredClone(DEFAULT_CONFIG);
     }
 
     try {
       const rawText = fs.readFileSync(this.configPath, 'utf-8');
       const parsed = JSON.parse(rawText);
 
-      const merged: AtojAppConfig = {
-        path: {
-          source: Array.isArray(parsed?.path?.source) ? parsed.path.source : DEFAULT_CONFIG.path.source,
-          target: typeof parsed?.path?.target === 'string' ? parsed.path.target : DEFAULT_CONFIG.path.target,
-          log: typeof parsed?.path?.log === 'string' ? parsed.path.log : DEFAULT_CONFIG.path.log,
-          sleep: typeof parsed?.path?.sleep === 'number' ? parsed.path.sleep : DEFAULT_CONFIG.path.sleep,
-        },
-        invalidFilePolicy:
-          parsed?.invalidFilePolicy === 'delete' ||
-          parsed?.invalidFilePolicy === 'quarantine' ||
-          parsed?.invalidFilePolicy === 'ignore'
-            ? parsed.invalidFilePolicy
-            : DEFAULT_CONFIG.invalidFilePolicy,
-        quarantineDir:
-          typeof parsed?.quarantineDir === 'string' ? parsed.quarantineDir : DEFAULT_CONFIG.quarantineDir,
-        scanExistingOnStart:
-          typeof parsed?.scanExistingOnStart === 'boolean'
+      // 신규 스키마(paths / watcher) 및 구형 레거시 스키마(path.source / path.sleep) 자동 호환
+      const sources = Array.isArray(parsed?.paths?.sources)
+        ? parsed.paths.sources
+        : Array.isArray(parsed?.path?.source)
+          ? parsed.path.source
+          : DEFAULT_CONFIG.paths.sources;
+
+      const targetDir =
+        typeof parsed?.paths?.targetDir === 'string'
+          ? parsed.paths.targetDir
+          : typeof parsed?.path?.target === 'string'
+            ? parsed.path.target
+            : DEFAULT_CONFIG.paths.targetDir;
+
+      const logDir =
+        typeof parsed?.paths?.logDir === 'string'
+          ? parsed.paths.logDir
+          : typeof parsed?.path?.log === 'string'
+            ? parsed.path.log
+            : DEFAULT_CONFIG.paths.logDir;
+
+      const quarantineDir =
+        typeof parsed?.paths?.quarantineDir === 'string'
+          ? parsed.paths.quarantineDir
+          : typeof parsed?.quarantineDir === 'string'
+            ? parsed.quarantineDir
+            : DEFAULT_CONFIG.paths.quarantineDir;
+
+      const writeStabilitySec =
+        typeof parsed?.watcher?.writeStabilitySec === 'number'
+          ? parsed.watcher.writeStabilitySec
+          : typeof parsed?.path?.sleep === 'number'
+            ? parsed.path.sleep
+            : DEFAULT_CONFIG.watcher.writeStabilitySec;
+
+      const scanExistingOnStart =
+        typeof parsed?.watcher?.scanExistingOnStart === 'boolean'
+          ? parsed.watcher.scanExistingOnStart
+          : typeof parsed?.scanExistingOnStart === 'boolean'
             ? parsed.scanExistingOnStart
-            : DEFAULT_CONFIG.scanExistingOnStart,
+            : DEFAULT_CONFIG.watcher.scanExistingOnStart;
+
+      const rawPolicy = parsed?.watcher?.invalidFilePolicy ?? parsed?.invalidFilePolicy;
+      const invalidFilePolicy: InvalidFilePolicy =
+        rawPolicy === 'delete' || rawPolicy === 'quarantine' || rawPolicy === 'ignore'
+          ? rawPolicy
+          : DEFAULT_CONFIG.watcher.invalidFilePolicy;
+
+      const merged: AtojAppConfig = {
+        paths: {
+          sources,
+          targetDir,
+          logDir,
+          quarantineDir,
+        },
+        watcher: {
+          writeStabilitySec: Math.max(1, Number(writeStabilitySec) || 3),
+          scanExistingOnStart,
+          invalidFilePolicy,
+        },
       };
 
       this.ensureDirectories(merged);
       return merged;
     } catch {
-      return { ...DEFAULT_CONFIG };
+      return structuredClone(DEFAULT_CONFIG);
     }
   }
 
@@ -73,27 +116,29 @@ export class ConfigManager {
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    const legacyCompatiblePayload = {
-      path: {
-        source: config.path.source,
-        target: config.path.target,
-        log: config.path.log,
-        sleep: Number(config.path.sleep) || 1,
+    const cleanConfig: AtojAppConfig = {
+      paths: {
+        sources: config.paths.sources,
+        targetDir: config.paths.targetDir,
+        logDir: config.paths.logDir,
+        quarantineDir: config.paths.quarantineDir,
       },
-      invalidFilePolicy: config.invalidFilePolicy,
-      quarantineDir: config.quarantineDir,
-      scanExistingOnStart: config.scanExistingOnStart,
+      watcher: {
+        writeStabilitySec: Math.max(1, Number(config.watcher.writeStabilitySec) || 3),
+        scanExistingOnStart: Boolean(config.watcher.scanExistingOnStart),
+        invalidFilePolicy: config.watcher.invalidFilePolicy,
+      },
     };
 
-    fs.writeFileSync(this.configPath, JSON.stringify(legacyCompatiblePayload, null, 2), 'utf-8');
-    this.ensureDirectories(config);
-    return config;
+    fs.writeFileSync(this.configPath, JSON.stringify(cleanConfig, null, 2), 'utf-8');
+    this.ensureDirectories(cleanConfig);
+    return cleanConfig;
   }
 
   public ensureDirectories(config: AtojAppConfig): void {
-    const dirs = [config.path.target, config.path.log];
-    if (config.invalidFilePolicy === 'quarantine' && config.quarantineDir) {
-      dirs.push(config.quarantineDir);
+    const dirs = [config.paths.targetDir, config.paths.logDir];
+    if (config.watcher.invalidFilePolicy === 'quarantine' && config.paths.quarantineDir) {
+      dirs.push(config.paths.quarantineDir);
     }
 
     for (const d of dirs) {

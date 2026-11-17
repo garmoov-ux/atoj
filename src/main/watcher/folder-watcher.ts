@@ -21,7 +21,7 @@ export class FolderWatcherService {
   constructor(config: AtojAppConfig, repo: ConversionRepository) {
     this.config = config;
     this.repo = repo;
-    this.logger = new FileLogger(config.path.log);
+    this.logger = new FileLogger(config.paths.logDir);
   }
 
   public onConversion(cb: (record: ConversionRecord) => void): () => void {
@@ -38,7 +38,7 @@ export class FolderWatcherService {
     const wasWatching = this.isWatching;
     this.stop();
     this.config = newConfig;
-    this.logger.setLogDir(newConfig.path.log);
+    this.logger.setLogDir(newConfig.paths.logDir);
     if (wasWatching) {
       this.start();
     } else {
@@ -49,7 +49,7 @@ export class FolderWatcherService {
   public start(): void {
     if (this.isWatching) return;
 
-    const existingSources = this.config.path.source.filter((p) => {
+    const existingSources = this.config.paths.sources.filter((p) => {
       const ok = fs.existsSync(p) && fs.statSync(p).isDirectory();
       if (!ok) {
         this.logger.write('Observer', 'ERROR', `[경로 오류] 존재하지 않는 경로: ${p}`);
@@ -67,9 +67,9 @@ export class FolderWatcherService {
 
     this.watcher = chokidar.watch(existingSources, {
       persistent: true,
-      ignoreInitial: !this.config.scanExistingOnStart,
+      ignoreInitial: !this.config.watcher.scanExistingOnStart,
       awaitWriteFinish: {
-        stabilityThreshold: Math.max((this.config.path.sleep || 1) * 1000, 500),
+        stabilityThreshold: Math.max((this.config.watcher.writeStabilitySec || 1) * 1000, 500),
         pollInterval: 200,
       },
     });
@@ -102,7 +102,7 @@ export class FolderWatcherService {
 
   public scanAllSourceFoldersNow(): number {
     let count = 0;
-    for (const srcDir of this.config.path.source) {
+    for (const srcDir of this.config.paths.sources) {
       if (!fs.existsSync(srcDir)) continue;
       const files = this.walkFilesRecursive(srcDir);
       for (const f of files) {
@@ -162,20 +162,23 @@ export class FolderWatcherService {
           imageCount: 0,
           fileSize: fs.existsSync(resolved) ? fs.statSync(resolved).size : 0,
           status: 'SKIPPED',
-          errorMessage: `아규격 파일명 정규식 불일치 (정책: ${this.config.invalidFilePolicy})`,
+          errorMessage: `아규격 파일명 정규식 불일치 (정책: ${this.config.watcher.invalidFilePolicy})`,
         });
 
         this.emitRecord(skipped);
         return skipped;
       }
 
-      const { outputFilePath, packed } = convertAverFileToJver(resolved, this.config.path.target);
+      const { outputFilePath, packed } = convertAverFileToJver(
+        resolved,
+        this.config.paths.targetDir,
+      );
       const { header, trackingImages } = packed.parsed;
       const rawTime17 = `${header.enfDate}${header.enfTime}000`;
 
       this.logger.write('Watchdog', 'INFO', '[자규격 파일 저장 완료]');
       this.logger.write('Watchdog', 'INFO', `소스폴더: ${path.dirname(resolved)}`);
-      this.logger.write('Watchdog', 'INFO', `타겟폴더: ${path.resolve(this.config.path.target)}`);
+      this.logger.write('Watchdog', 'INFO', `타겟폴더: ${path.resolve(this.config.paths.targetDir)}`);
       this.logger.write('Watchdog', 'INFO', `파일경로: ${outputFilePath}`);
 
       if (!forceManual && fs.existsSync(resolved)) {
@@ -234,10 +237,11 @@ export class FolderWatcherService {
 
   private handleInvalidFile(filePath: string): void {
     try {
-      if (this.config.invalidFilePolicy === 'delete') {
+      const policy = this.config.watcher.invalidFilePolicy;
+      if (policy === 'delete') {
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      } else if (this.config.invalidFilePolicy === 'quarantine') {
-        const qDir = path.resolve(this.config.quarantineDir || './quarantine');
+      } else if (policy === 'quarantine') {
+        const qDir = path.resolve(this.config.paths.quarantineDir || './quarantine');
         if (!fs.existsSync(qDir)) fs.mkdirSync(qDir, { recursive: true });
         const dest = path.join(qDir, path.basename(filePath));
         fs.renameSync(filePath, dest);
@@ -249,7 +253,7 @@ export class FolderWatcherService {
 
   public getSummary(): DashboardSummary {
     const stats = this.repo.getStats();
-    const watchedFolders = this.config.path.source.map((p) => ({
+    const watchedFolders = this.config.paths.sources.map((p) => ({
       path: p,
       exists: fs.existsSync(p) && fs.statSync(p).isDirectory(),
     }));

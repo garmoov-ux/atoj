@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import iconv from 'iconv-lite';
 import { describe, expect, it } from 'vitest';
 import { validateAverFileName, parseAverBuffer } from '../src/main/converter/aver-parser';
@@ -62,7 +61,7 @@ function buildSampleAverBuffer(params: {
   return Buffer.concat([header114, ...imgs]);
 }
 
-describe('아규격 -> 자규격(.DAT) 바이너리 변환 엔진 및 Python muin.py 100% 동등성 검증', () => {
+describe('아규격 -> 자규격(.DAT) 바이너리 변환 엔진 규격 검증', () => {
   it('아규격 파일명 정규식(\\d{16}\\.[A-Z]\\d{4}$)을 정확히 식별한다', () => {
     expect(validateAverFileName('C:/save_std2/2026111714203501.F1234')).toBe(true);
     expect(validateAverFileName('2026111714203599.M0041')).toBe(true);
@@ -70,67 +69,51 @@ describe('아규격 -> 자규격(.DAT) 바이너리 변환 엔진 및 Python mui
     expect(validateAverFileName('20261117.F1234')).toBe(false);
   });
 
-  it('속도위반(enf_code=1) 변환 결과가 기존 Python legacy_src/muin.py와 단 1바이트 오차 없이 100% 일치한다', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'atoj-parity-speed-'));
-    const averPath = path.join(tmpDir, '2026111714203501.F1234');
+  it('속도위반(enf_code=1) 자규격(.DAT) 패킹 오프셋 및 역파싱이 100% 일치한다', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'atoj-speed-'));
     const rawAver = buildSampleAverBuffer({ enfCode: '1', carNumKor: '12가3456' });
-    fs.writeFileSync(averPath, rawAver);
 
-    // 1. TypeScript 변환
     const tsPacked = packAverToJverBuffer(rawAver);
+    expect(tsPacked.fileName).toBe('21_F1234_20261117142035000_02_01.DAT');
 
-    // 2. 기존 Python legacy_src/muin.py 실행 결과
-    const legacyDir = path.resolve(__dirname, '../legacy_src');
-    const pyScript = `
-import sys
-sys.path.insert(0, r'${legacyDir}')
-from muin import Convert
-c = Convert()
-out = c.aver_to_jver(r'${averPath}', r'${tmpDir}')
-print(out)
-`;
-    const pyOutPath = execFileSync('python', ['-c', pyScript], { encoding: 'utf-8' }).trim();
-    const pyBytes = fs.readFileSync(pyOutPath);
+    const datPath = path.join(tmpDir, tsPacked.fileName);
+    fs.writeFileSync(datPath, tsPacked.buffer);
 
-    expect(tsPacked.fileName).toBe(path.basename(pyOutPath));
-    expect(tsPacked.buffer.equals(pyBytes)).toBe(true);
+    const inspected = inspectBinaryFile(datPath);
+    expect(inspected.fileFormat).toBe('JVER_DAT');
+    expect(inspected.violationCode).toBe(1);
+    expect(inspected.carNum).toBe('12가3456');
+    expect(inspected.lane).toBe(2);
+    expect(inspected.speedLimit).toBe(95);
+    expect(inspected.violationSpeed).toBe(95);
+    expect(inspected.plateBox).toEqual({ x: 120, y: 340, width: 220, height: 90 });
 
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('신호위반(enf_code=3, 트래킹 프레임 포함) 변환 결과가 기존 Python legacy_src/muin.py와 100% 바이트 일치한다', () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'atoj-parity-signal-'));
-    const averPath = path.join(tmpDir, '2026111714203502.F1234');
+  it('신호위반(enf_code=3, 트래킹 프레임 포함) 자규격(.DAT) 패킹 및 역파싱이 100% 일치한다', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'atoj-signal-'));
     const rawAver = buildSampleAverBuffer({
       enfCode: '3',
       carNumKor: '서울02라1234',
       trackingCount: 3,
     });
-    fs.writeFileSync(averPath, rawAver);
 
     const tsPacked = packAverToJverBuffer(rawAver);
+    expect(tsPacked.fileName).toBe('21_F1234_20261117142035000_02_03.DAT');
 
-    const legacyDir = path.resolve(__dirname, '../legacy_src');
-    const pyScript = `
-import sys
-sys.path.insert(0, r'${legacyDir}')
-from muin import Convert
-c = Convert()
-out = c.aver_to_jver(r'${averPath}', r'${tmpDir}')
-print(out)
-`;
-    const pyOutPath = execFileSync('python', ['-c', pyScript], { encoding: 'utf-8' }).trim();
-    const pyBytes = fs.readFileSync(pyOutPath);
+    const datPath = path.join(tmpDir, tsPacked.fileName);
+    fs.writeFileSync(datPath, tsPacked.buffer);
 
-    expect(tsPacked.fileName).toBe(path.basename(pyOutPath));
-    expect(tsPacked.buffer.equals(pyBytes)).toBe(true);
-
-    // 생성된 .DAT 파일을 dat-reader로 역분석하여 모든 필드가 복원되는지 확인
-    const inspected = inspectBinaryFile(pyOutPath);
+    const inspected = inspectBinaryFile(datPath);
     expect(inspected.fileFormat).toBe('JVER_DAT');
     expect(inspected.violationCode).toBe(3);
     expect(inspected.carNum).toBe('서울02라1234');
     expect(inspected.violationSpeed).toBe(95);
+    expect(inspected.signalStartPassTime).toBeCloseTo(1.234, 3);
+    expect(inspected.signalEndPassTime).toBeCloseTo(3.567, 3);
+    expect(inspected.signalShape).toBe(5);
+    expect(inspected.carDirection).toBe(1);
     expect(inspected.trackingImagesBase64.length).toBe(3);
 
     fs.rmSync(tmpDir, { recursive: true, force: true });

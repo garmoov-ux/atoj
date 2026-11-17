@@ -1,17 +1,21 @@
 export type InvalidFilePolicy = 'ignore' | 'quarantine' | 'delete';
 
-export interface AtojPathConfig {
-  source: string[];
-  target: string;
-  log: string;
-  sleep: number;
+export interface AtojPathsConfig {
+  sources: string[];
+  targetDir: string;
+  logDir: string;
+  quarantineDir: string;
+}
+
+export interface AtojWatcherConfig {
+  writeStabilitySec: number;
+  scanExistingOnStart: boolean;
+  invalidFilePolicy: InvalidFilePolicy;
 }
 
 export interface AtojAppConfig {
-  path: AtojPathConfig;
-  invalidFilePolicy: InvalidFilePolicy;
-  quarantineDir: string;
-  scanExistingOnStart: boolean;
+  paths: AtojPathsConfig;
+  watcher: AtojWatcherConfig;
 }
 
 export interface AverHeader {

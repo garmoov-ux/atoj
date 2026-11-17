@@ -18,7 +18,7 @@ export const WatchedFoldersCard: React.FC<WatchedFoldersCardProps> = ({
   return (
     <UtilityCard
       title="수신 감시 폴더 및 출력 경로 상태"
-      subtitle="config.json에 등록된 아규격 수신 폴더의 연결 상태입니다."
+      subtitle="config.json에 등록된 아규격 수신 폴더(paths.sources)의 연결 상태입니다."
       rightAction={
         <PillButton variant="pearl-capsule" size="sm" onClick={onGoSettings}>
           경로 설정 변경
@@ -70,15 +70,15 @@ export const WatchedFoldersCard: React.FC<WatchedFoldersCardProps> = ({
         <div className="mt-5 pt-4 border-t border-[#e0e0e0] grid grid-cols-1 sm:grid-cols-3 gap-4 text-[13px]">
           <div>
             <span className="text-[#7a7a7a]">자규격(.DAT) 저장 폴더: </span>
-            <strong className="font-mono text-[#1d1d1f]">{config.path.target}</strong>
+            <strong className="font-mono text-[#1d1d1f]">{config.paths.targetDir}</strong>
           </div>
           <div>
             <span className="text-[#7a7a7a]">로그 저장 폴더: </span>
-            <strong className="font-mono text-[#1d1d1f]">{config.path.log}</strong>
+            <strong className="font-mono text-[#1d1d1f]">{config.paths.logDir}</strong>
           </div>
           <div>
-            <span className="text-[#7a7a7a]">쓰기 안정 대기(sleep): </span>
-            <strong className="text-[#1d1d1f]">{config.path.sleep}초</strong>
+            <span className="text-[#7a7a7a]">쓰기 안정 대기(writeStabilitySec): </span>
+            <strong className="text-[#1d1d1f]">{config.watcher.writeStabilitySec}초</strong>
           </div>
         </div>
       )}
