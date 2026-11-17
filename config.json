@@ -1,0 +1,8 @@
+{
+  "path": {
+    "source": ["C:/save_std2", "D:/MuinServer/2_Metafile/Signal", "D:/MuinServer/2_Metafile/Speed"],
+    "target": "./result",
+    "log": "./log",
+    "sleep": 3
+  }
+}
