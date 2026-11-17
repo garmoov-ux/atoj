@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "rebuild:electron": "electron-rebuild -f -w better-sqlite3",
+    "setup": "npm ci --ignore-scripts && node node_modules/electron/install.js && npm run rebuild:electron",
+    "rebuild:electron": "node -e \"const {execSync}=require('child_process');execSync('node ../prebuild-install/bin.js --runtime=electron --target=34.2.0',{cwd:'node_modules/better-sqlite3',stdio:'inherit'})\"",
     "pack": "npm run rebuild:electron && npm run build && electron-builder --dir",
     "dist:win": "npm run rebuild:electron && npm run build && electron-builder --win"
   },

@@ -1,5 +1,6 @@
 appId: com.muin.atoj
 productName: AtoJ
+npmRebuild: false
 directories:
   buildResources: build
   output: release
