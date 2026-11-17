@@ -28,6 +28,7 @@ export const App: React.FC = () => {
     inspectFileByPath,
     selectAndInspectFile,
     manualConvertSingleFile,
+    manualConvertFolder,
   } = useAtojState();
 
   const handleOpenRecordInViewer = async (record: { id: number; targetPath: string | null; sourcePath: string }) => {
@@ -53,6 +54,13 @@ export const App: React.FC = () => {
   const handleManualConvert = async () => {
     const outputPath = await manualConvertSingleFile();
     if (outputPath) {
+      setActiveTab('viewer');
+    }
+  };
+
+  const handleManualConvertFolder = async () => {
+    const ok = await manualConvertFolder();
+    if (ok) {
       setActiveTab('viewer');
     }
   };
@@ -89,6 +97,7 @@ export const App: React.FC = () => {
               onSelectRecordById={(id) => void inspectRecordById(id)}
               onSelectFileToInspect={() => void selectAndInspectFile()}
               onManualConvert={() => void handleManualConvert()}
+              onManualConvertFolder={() => void handleManualConvertFolder()}
             />
           )}
 

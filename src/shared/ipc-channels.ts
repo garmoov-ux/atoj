@@ -28,6 +28,7 @@ export const IPC_CHANNELS = {
   INSPECT_BINARY_FILE: 'atoj:inspect-binary-file',
   INSPECT_RECORD: 'atoj:inspect-record',
   CONVERT_SINGLE_FILE: 'atoj:convert-single-file',
+  CONVERT_FOLDER_FILES: 'atoj:convert-folder-files',
   TOGGLE_WATCHER: 'atoj:toggle-watcher',
   SCAN_SOURCE_FOLDERS: 'atoj:scan-source-folders',
   RUN_RETENTION_CLEANUP: 'atoj:run-retention-cleanup',
@@ -58,6 +59,15 @@ export interface AtojElectronApi {
   inspectBinaryFile: (filePath: string) => Promise<IpcResult<DatInspectionResult>>;
   inspectRecord: (recordId?: number) => Promise<IpcResult<DatInspectionResult | null>>;
   convertSingleFile: (filePath: string) => Promise<IpcResult<ConversionRecord>>;
+  convertFolderFiles: () => Promise<
+    IpcResult<{
+      folderPath: string;
+      totalFound: number;
+      convertedCount: number;
+      failedCount: number;
+      latestRecordId: number | null;
+    } | null>
+  >;
   toggleWatcher: (enable: boolean) => Promise<IpcResult<DashboardSummary>>;
   scanSourceFolders: () => Promise<IpcResult<{ scannedCount: number }>>;
   runRetentionCleanup: () => Promise<IpcResult<RetentionCleanupResult>>;

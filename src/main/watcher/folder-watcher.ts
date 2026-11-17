@@ -157,6 +157,49 @@ export class FolderWatcherService {
     return count;
   }
 
+  public async convertFolderBatch(folderPath: string): Promise<{
+    folderPath: string;
+    totalFound: number;
+    convertedCount: number;
+    failedCount: number;
+    latestRecordId: number | null;
+  }> {
+    const resolvedDir = path.resolve(folderPath);
+    const allFiles = this.walkFilesRecursive(resolvedDir).filter(
+      (f) => path.extname(f).toLowerCase() !== '.dat',
+    );
+
+    let convertedCount = 0;
+    let failedCount = 0;
+    let latestRecordId: number | null = null;
+
+    for (const file of allFiles) {
+      const rec = await this.processFile(file, true);
+      if (rec) {
+        if (rec.status === 'SUCCESS') {
+          convertedCount++;
+          latestRecordId = rec.id;
+        } else if (rec.status === 'FAILED') {
+          failedCount++;
+        }
+      }
+    }
+
+    this.logger.write(
+      '변환처리',
+      '정보',
+      `폴더 선택 일괄 변환 완료 | 대상 폴더: ${resolvedDir} | 전체 파일: ${allFiles.length}건 | 성공: ${convertedCount}건 | 실패: ${failedCount}건`,
+    );
+
+    return {
+      folderPath: resolvedDir,
+      totalFound: allFiles.length,
+      convertedCount,
+      failedCount,
+      latestRecordId,
+    };
+  }
+
   private walkFilesRecursive(dir: string): string[] {
     const results: string[] = [];
     try {

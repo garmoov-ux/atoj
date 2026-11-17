@@ -7,6 +7,7 @@ import {
   FileSearch,
   FileUp,
   Film,
+  FolderUp,
 } from 'lucide-react';
 import { UtilityCard } from '../../components/ui/UtilityCard';
 import { PillButton } from '../../components/ui/PillButton';
@@ -18,6 +19,7 @@ interface BinaryViewerViewProps {
   onSelectRecordById: (recordId: number) => void;
   onSelectFileToInspect: () => void;
   onManualConvert: () => void;
+  onManualConvertFolder: () => void;
 }
 
 export const BinaryViewerView: React.FC<BinaryViewerViewProps> = ({
@@ -25,6 +27,7 @@ export const BinaryViewerView: React.FC<BinaryViewerViewProps> = ({
   onSelectRecordById,
   onSelectFileToInspect,
   onManualConvert,
+  onManualConvertFolder,
 }) => {
   const [selectedFrameIdx, setSelectedFrameIdx] = useState<number | null>(null);
 
@@ -49,7 +52,7 @@ export const BinaryViewerView: React.FC<BinaryViewerViewProps> = ({
     return (
       <div className="h-full flex flex-col p-3.5 w-full min-h-0">
         <UtilityCard className="flex-1 items-center justify-center text-center">
-          <div className="max-w-[400px] mx-auto flex flex-col items-center gap-3.5 py-8">
+          <div className="max-w-[440px] mx-auto flex flex-col items-center gap-3.5 py-8">
             <div className="w-12 h-12 rounded-[10px] bg-[#eff6ff] border border-[#bfdbfe] flex items-center justify-center text-[#2563eb]">
               <FileSearch className="w-6 h-6" />
             </div>
@@ -58,17 +61,21 @@ export const BinaryViewerView: React.FC<BinaryViewerViewProps> = ({
                 단속 데이터 및 영상 뷰어
               </h2>
               <p className="text-[13px] text-[#64748b] mt-1">
-                변환된 이력이 쌓이면 외부 시스템이 결과 파일을 가져간 뒤에도 내부 스냅샷으로 언제든 이전/다음 단속 영상과 속성:값을 조회할 수 있습니다.
+                외부 단속 파일을 열거나, 단일 파일 및 폴더를 선택하여 자규격(.DAT)으로 일괄 변환하고 이전/다음 단속 영상과 속성:값을 조회합니다.
               </p>
             </div>
             <div className="flex items-center gap-2 mt-1">
               <PillButton variant="primary" onClick={onSelectFileToInspect}>
                 <FileSearch className="w-4 h-4" />
-                <span>외부 단속 파일 열기</span>
+                <span>파일 열기</span>
               </PillButton>
               <PillButton variant="secondary-pill" onClick={onManualConvert}>
                 <FileUp className="w-4 h-4" />
-                <span>아규격 단일 파일 변환</span>
+                <span>단일 변환</span>
+              </PillButton>
+              <PillButton variant="dark-utility" onClick={onManualConvertFolder}>
+                <FolderUp className="w-4 h-4" />
+                <span>폴더 변환</span>
               </PillButton>
             </div>
           </div>
@@ -94,7 +101,7 @@ export const BinaryViewerView: React.FC<BinaryViewerViewProps> = ({
               size="sm"
               disabled={!inspected.prevRecordId}
               onClick={() => inspected.prevRecordId && onSelectRecordById(inspected.prevRecordId)}
-              title="이전 단속 데이터 (← 방향키)"
+              title="이전 순번 단속 데이터 (← 방향키)"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
               <span>이전</span>
@@ -111,7 +118,7 @@ export const BinaryViewerView: React.FC<BinaryViewerViewProps> = ({
               size="sm"
               disabled={!inspected.nextRecordId}
               onClick={() => inspected.nextRecordId && onSelectRecordById(inspected.nextRecordId)}
-              title="다음(최신) 단속 데이터 (→ 방향키)"
+              title="다음 순번 단속 데이터 (→ 방향키)"
             >
               <span>다음</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -143,6 +150,10 @@ export const BinaryViewerView: React.FC<BinaryViewerViewProps> = ({
           <PillButton variant="secondary-pill" size="sm" onClick={onManualConvert}>
             <FileUp className="w-3.5 h-3.5" />
             <span>단일 변환</span>
+          </PillButton>
+          <PillButton variant="dark-utility" size="sm" onClick={onManualConvertFolder}>
+            <FolderUp className="w-3.5 h-3.5 text-[#38bdf8]" />
+            <span>폴더 변환</span>
           </PillButton>
         </div>
       </div>

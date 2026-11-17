@@ -145,15 +145,18 @@ export class ConversionRepository {
   }
 
   public getNavigationMeta(recordId: number): RecordNavigationMeta {
+    // 목록은 최신순(1번 = 가장 최근 id, N번 = 가장 오래된 id)으로 정렬됨
+    // [< 이전]: 현재 순번보다 앞 번호(1번 방향, id > current)로 이동
     const prevRow = this.db
       .prepare(
-        "SELECT id FROM conversion_history WHERE status = 'SUCCESS' AND id < ? ORDER BY id DESC LIMIT 1",
+        "SELECT id FROM conversion_history WHERE status = 'SUCCESS' AND id > ? ORDER BY id ASC LIMIT 1",
       )
       .get(recordId) as { id: number } | undefined;
 
+    // [다음 >]: 현재 순번보다 다음 번호(2번, 3번... 방향, id < current)로 이동
     const nextRow = this.db
       .prepare(
-        "SELECT id FROM conversion_history WHERE status = 'SUCCESS' AND id > ? ORDER BY id ASC LIMIT 1",
+        "SELECT id FROM conversion_history WHERE status = 'SUCCESS' AND id < ? ORDER BY id DESC LIMIT 1",
       )
       .get(recordId) as { id: number } | undefined;
 

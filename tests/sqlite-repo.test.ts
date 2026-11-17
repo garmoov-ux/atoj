@@ -60,8 +60,8 @@ describe('SQLite(:memory:) 변환 이력 리포지토리 검증', () => {
     const navLatest = repo.getNavigationMeta(latest!.id);
     expect(navLatest.currentPosition).toBe(1);
     expect(navLatest.totalSuccessCount).toBe(2);
-    expect(navLatest.prevRecordId).toBe(1);
-    expect(navLatest.nextRecordId).toBeNull();
+    expect(navLatest.prevRecordId).toBeNull();
+    expect(navLatest.nextRecordId).toBe(1);
 
     const cleared = repo.clearAll();
     expect(cleared).toBe(2);

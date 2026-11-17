@@ -18,12 +18,12 @@ export const DashboardHeroTile: React.FC<DashboardHeroTileProps> = ({ summary })
       tone: 'default' as const,
     },
     {
-      label: '속도위반 (코드1)',
+      label: '속도위반',
       value: summary.speedCount.toLocaleString(),
       tone: 'amber' as const,
     },
     {
-      label: '신호위반 (코드3)',
+      label: '신호위반',
       value: summary.signalCount.toLocaleString(),
       tone: 'rose' as const,
     },

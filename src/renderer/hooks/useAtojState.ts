@@ -191,6 +191,32 @@ export function useAtojState() {
     return null;
   }, [inspectRecordById, inspectFileByPath, showToast]);
 
+  const manualConvertFolder = useCallback(async (): Promise<boolean> => {
+    if (typeof window.atojApi.convertFolderFiles !== 'function') {
+      showToast('폴더 일괄 변환 기능을 사용하려면 프로그램을 재시작해 주세요.');
+      return false;
+    }
+    const res = await window.atojApi.convertFolderFiles();
+    if (!res.success) {
+      showToast(`폴더 변환 실패: ${res.error || '오류 발생'}`);
+      return false;
+    }
+    if (!res.data) return false;
+
+    const { convertedCount, failedCount, totalFound } = res.data;
+    if (totalFound === 0) {
+      showToast('선택한 폴더 내에 변환할 단속 파일이 없습니다.');
+      return false;
+    }
+
+    showToast(
+      `폴더 일괄 변환 완료: 성공 ${convertedCount}건${failedCount > 0 ? ` · 실패 ${failedCount}건` : ''}`,
+    );
+    await refreshInitial();
+    await inspectRecordById();
+    return convertedCount > 0;
+  }, [inspectRecordById, refreshInitial, showToast]);
+
   return {
     summary,
     config,
@@ -206,5 +232,6 @@ export function useAtojState() {
     inspectFileByPath,
     selectAndInspectFile,
     manualConvertSingleFile,
+    manualConvertFolder,
   };
 }

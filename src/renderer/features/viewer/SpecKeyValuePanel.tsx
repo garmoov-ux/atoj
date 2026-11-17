@@ -70,7 +70,7 @@ export const SpecKeyValuePanel: React.FC<SpecKeyValuePanelProps> = ({ inspected 
     { key: '차량번호', value: inspected.carNum, accent: 'primary' },
     {
       key: '위반구분',
-      value: `${inspected.violationLabel} (코드 ${inspected.violationCode})`,
+      value: inspected.violationLabel,
       accent: isSignal ? 'danger' : 'primary',
     },
     { key: '위반속도', value: `${inspected.violationSpeed} km/h`, accent: 'danger' },
@@ -78,7 +78,7 @@ export const SpecKeyValuePanel: React.FC<SpecKeyValuePanelProps> = ({ inspected 
       ? [{ key: '단속기준속도', value: `${inspected.speedLimit} km/h` }]
       : []),
     { key: '위반차로', value: `${inspected.lane}차로` },
-    { key: '차종분류', value: `${inspected.carTypeLabel} (코드 ${inspected.carType})` },
+    { key: '차종분류', value: inspected.carTypeLabel },
   ];
 
   const deviceItems: KvItem[] = [
@@ -88,11 +88,11 @@ export const SpecKeyValuePanel: React.FC<SpecKeyValuePanelProps> = ({ inspected 
       ? [
           {
             key: '세부위반종류',
-            value: `${ENF_TYPE_LABELS[raw.enfType] || '기본'} (${raw.enfType})`,
+            value: ENF_TYPE_LABELS[raw.enfType] || '기본',
           },
           {
             key: '트리거종류',
-            value: `${TRIGGER_TYPE_LABELS[raw.triggerType] || '기본'} (${raw.triggerType})`,
+            value: TRIGGER_TYPE_LABELS[raw.triggerType] || '기본',
           },
           { key: '원본헤더크기', value: `${raw.rawSizeField} (114B)` },
         ]
@@ -102,7 +102,7 @@ export const SpecKeyValuePanel: React.FC<SpecKeyValuePanelProps> = ({ inspected 
   const plateItems: KvItem[] = [
     {
       key: '번호판인식유무',
-      value: inspected.hasPlate === 1 ? '존재 (1)' : '미존재 (0)',
+      value: inspected.hasPlate === 1 ? '존재' : '미존재',
       accent: inspected.hasPlate === 1 ? 'emerald' : undefined,
     },
     {
@@ -119,18 +119,17 @@ export const SpecKeyValuePanel: React.FC<SpecKeyValuePanelProps> = ({ inspected 
     ? [
         {
           key: '신호등상태',
-          value: `${inspected.signalShapeLabel || '-'} (코드 ${inspected.signalShape ?? '-'})`,
+          value: inspected.signalShapeLabel || '-',
           accent: 'danger',
         },
         {
           key: '차량진행방향',
-          value: `${inspected.carDirectionLabel || '-'} (코드 ${inspected.carDirection ?? '-'})`,
+          value: inspected.carDirectionLabel || '-',
         },
         {
           key: '신호등종류',
           value:
-            (inspected.signalType && SIGNAL_TYPE_LABELS[inspected.signalType]) ||
-            `코드 ${inspected.signalType ?? '-'}`,
+            (inspected.signalType && SIGNAL_TYPE_LABELS[inspected.signalType]) || '-',
         },
         { key: '정지선통과시간', value: `${inspected.signalStartPassTime ?? 0} 초` },
         { key: '교차로통과시간', value: `${inspected.signalEndPassTime ?? 0} 초` },

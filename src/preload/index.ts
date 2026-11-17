@@ -32,6 +32,7 @@ const atojApi: AtojElectronApi = {
     ipcRenderer.invoke(IPC_CHANNELS.INSPECT_RECORD, recordId),
   convertSingleFile: (filePath: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.CONVERT_SINGLE_FILE, filePath),
+  convertFolderFiles: () => ipcRenderer.invoke(IPC_CHANNELS.CONVERT_FOLDER_FILES),
   toggleWatcher: (enable: boolean) => ipcRenderer.invoke(IPC_CHANNELS.TOGGLE_WATCHER, enable),
   scanSourceFolders: () => ipcRenderer.invoke(IPC_CHANNELS.SCAN_SOURCE_FOLDERS),
   runRetentionCleanup: () => ipcRenderer.invoke(IPC_CHANNELS.RUN_RETENTION_CLEANUP),

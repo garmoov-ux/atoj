@@ -186,6 +186,18 @@ export function registerIpcHandlers(
     }),
   );
 
+  ipcMain.handle(IPC_CHANNELS.CONVERT_FOLDER_FILES, async () =>
+    wrapIpc(async () => {
+      const win = mainWindowGetter();
+      const res = await dialog.showOpenDialog(win!, {
+        title: '일괄 변환할 아규격 단속 파일 폴더 선택',
+        properties: ['openDirectory'],
+      });
+      if (res.canceled || res.filePaths.length === 0) return null;
+      return watcherService.convertFolderBatch(res.filePaths[0]);
+    }),
+  );
+
   ipcMain.handle(IPC_CHANNELS.TOGGLE_WATCHER, (_event, enable: boolean) =>
     wrapIpc(() => {
       if (enable) {

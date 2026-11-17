@@ -119,12 +119,12 @@ function buildReportHtml(report: MonthlyStatsReport): string {
       <div class="k-sub">총 처리 ${report.totalProcessed.toLocaleString()}건 (성공률 ${successRate}%)</div>
     </div>
     <div class="kpi-box">
-      <div class="k-label">속도위반 (코드 1)</div>
+      <div class="k-label">속도위반</div>
       <div class="k-val" style="color:#1d4ed8;">${report.speedCount.toLocaleString()}건</div>
       <div class="k-sub">전체 단속 대비 ${speedPct}%</div>
     </div>
     <div class="kpi-box">
-      <div class="k-label">신호위반 (코드 3)</div>
+      <div class="k-label">신호위반</div>
       <div class="k-val" style="color:#e11d48;">${report.signalCount.toLocaleString()}건</div>
       <div class="k-sub">전체 단속 대비 ${signalPct}%</div>
     </div>
@@ -145,8 +145,8 @@ function buildReportHtml(report: MonthlyStatsReport): string {
         <th style="width:45px;text-align:center;">순위</th>
         <th>장비번호 (LocalNo)</th>
         <th style="text-align:right;">정상 변환 합계</th>
-        <th style="text-align:right;">속도위반 (코드1)</th>
-        <th style="text-align:right;">신호위반 (코드3)</th>
+        <th style="text-align:right;">속도위반</th>
+        <th style="text-align:right;">신호위반</th>
         <th style="text-align:right;">평균 / 최고속도</th>
         <th style="text-align:right;">비중</th>
       </tr>
@@ -160,8 +160,8 @@ function buildReportHtml(report: MonthlyStatsReport): string {
       <tr>
         <th>단속 일자</th>
         <th style="text-align:right;">정상 변환 합계</th>
-        <th style="text-align:right;">속도위반 (코드1)</th>
-        <th style="text-align:right;">신호위반 (코드3)</th>
+        <th style="text-align:right;">속도위반</th>
+        <th style="text-align:right;">신호위반</th>
         <th style="text-align:right;">오류 건수</th>
       </tr>
     </thead>

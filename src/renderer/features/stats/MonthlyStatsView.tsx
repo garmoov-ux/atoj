@@ -120,7 +120,7 @@ export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMess
 
         <div className="bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] px-4 py-2.5 flex items-center justify-between">
           <div>
-            <div className="text-[11.5px] text-[#64748b]">속도위반 (코드1)</div>
+            <div className="text-[11.5px] text-[#64748b]">속도위반</div>
             <div className="text-[11px] text-[#2563eb] font-medium mt-0.5">비중 {speedPct}%</div>
           </div>
           <div className="text-[22px] font-bold text-[#2563eb]">
@@ -130,7 +130,7 @@ export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMess
 
         <div className="bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] px-4 py-2.5 flex items-center justify-between">
           <div>
-            <div className="text-[11.5px] text-[#64748b]">신호위반 (코드3)</div>
+            <div className="text-[11.5px] text-[#64748b]">신호위반</div>
             <div className="text-[11px] text-[#e11d48] font-medium mt-0.5">비중 {signalPct}%</div>
           </div>
           <div className="text-[22px] font-bold text-[#e11d48]">
