@@ -10,7 +10,6 @@ import {
   Settings,
   ShieldCheck,
 } from 'lucide-react';
-import { PillButton } from '../ui/PillButton';
 
 export type NavTab = 'dashboard' | 'history' | 'viewer' | 'settings';
 
@@ -39,7 +38,7 @@ export const GlobalNav: React.FC<GlobalNavProps> = ({
   onManualConvert,
 }) => {
   return (
-    <header className="h-[52px] bg-[#000000] text-white px-5 flex items-center justify-between gap-4 shrink-0 select-none border-b border-[#272729]">
+    <header className="h-[48px] bg-[#000000] text-white px-5 flex items-center justify-between gap-4 shrink-0 select-none border-b border-[#272729]">
       <div className="flex items-center gap-6 min-w-0">
         <div className="flex items-center gap-2 font-semibold text-[14px] tracking-[-0.01em] whitespace-nowrap shrink-0">
           <ShieldCheck className="w-4 h-4 text-[#2997ff]" />
@@ -68,37 +67,46 @@ export const GlobalNav: React.FC<GlobalNavProps> = ({
         </nav>
       </div>
 
+      {/* 우측 아이콘 컨트롤 클러스터 */}
       <div className="flex items-center gap-2 shrink-0">
-        <PillButton variant="dark-utility" size="sm" onClick={onManualConvert}>
-          <FileUp className="w-3.5 h-3.5 text-[#2997ff]" />
-          <span>파일 직접 변환</span>
-        </PillButton>
+        <button
+          type="button"
+          onClick={onManualConvert}
+          title="파일 직접 변환"
+          aria-label="파일 직접 변환"
+          className="w-[34px] h-[34px] rounded-full bg-[#1d1d1f] hover:bg-[#2a2a2c] text-[#cccccc] hover:text-white flex items-center justify-center transition-transform duration-150 active:scale-95 cursor-pointer border border-[#3a3a3c]"
+        >
+          <FileUp className="w-4 h-4 text-[#2997ff]" />
+        </button>
 
-        <PillButton variant="dark-utility" size="sm" onClick={onScanNow}>
-          <FolderSearch className="w-3.5 h-3.5 text-[#cccccc]" />
-          <span>폴더 전체 점검</span>
-        </PillButton>
+        <button
+          type="button"
+          onClick={onScanNow}
+          title="수신 폴더 전체 점검"
+          aria-label="수신 폴더 전체 점검"
+          className="w-[34px] h-[34px] rounded-full bg-[#1d1d1f] hover:bg-[#2a2a2c] text-[#cccccc] hover:text-white flex items-center justify-center transition-transform duration-150 active:scale-95 cursor-pointer border border-[#3a3a3c]"
+        >
+          <FolderSearch className="w-4 h-4" />
+        </button>
 
         <button
           type="button"
           onClick={onToggleWatcher}
-          className={`h-[32px] px-3.5 rounded-full text-[12px] font-semibold whitespace-nowrap shrink-0 inline-flex items-center gap-1.5 transition-transform duration-150 active:scale-95 cursor-pointer ${
+          title={isWatching ? '실시간 감시 작동 중 (클릭 시 일시정지)' : '실시간 감시 시작'}
+          aria-label={isWatching ? '실시간 감시 일시정지' : '실시간 감시 시작'}
+          className={`relative w-[34px] h-[34px] rounded-full flex items-center justify-center transition-transform duration-150 active:scale-95 cursor-pointer ${
             isWatching
-              ? 'bg-[#272729] text-[#2997ff] border border-[#3a3a3c]'
+              ? 'bg-[#272729] text-[#2997ff] border border-[#2997ff]/50'
               : 'bg-[#0066cc] text-white'
           }`}
         >
           {isWatching ? (
             <>
-              <span className="w-2 h-2 rounded-full bg-[#2997ff] animate-pulse" />
-              <span>감시 작동 중</span>
-              <Pause className="w-3 h-3 ml-0.5 text-[#cccccc]" />
+              <Pause className="w-4 h-4" />
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#2997ff] border-2 border-[#000000] animate-pulse" />
             </>
           ) : (
-            <>
-              <Play className="w-3 h-3" />
-              <span>감시 시작</span>
-            </>
+            <Play className="w-4 h-4 ml-0.5" />
           )}
         </button>
       </div>
