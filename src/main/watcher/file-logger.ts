@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveAppPath } from '../config/app-paths';
 
 function getTodayCompact(): string {
   const now = new Date();
@@ -24,12 +25,12 @@ export class FileLogger {
   private logDir: string;
 
   constructor(logDir: string) {
-    this.logDir = path.resolve(logDir);
+    this.logDir = resolveAppPath(logDir);
     this.ensureDir();
   }
 
   public setLogDir(logDir: string): void {
-    this.logDir = path.resolve(logDir);
+    this.logDir = resolveAppPath(logDir);
     this.ensureDir();
   }
 

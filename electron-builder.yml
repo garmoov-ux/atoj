@@ -16,6 +16,9 @@ files:
   - "!tsconfig.*"
 asarUnpack:
   - "**/*.node"
+extraFiles:
+  - from: "config.json"
+    to: "config.json"
 win:
   signAndEditExecutable: false
   target:

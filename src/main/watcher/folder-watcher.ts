@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import chokidar, { type FSWatcher } from 'chokidar';
+import { resolveAppPath } from '../config/app-paths';
 import { validateAverFileName } from '../converter/aver-parser';
 import { convertAverFileToJver } from '../converter/jver-packer';
 import type { ConversionRepository } from '../db/conversion-repo';
@@ -169,16 +170,17 @@ export class FolderWatcherService {
         return skipped;
       }
 
+      const targetDirResolved = resolveAppPath(this.config.paths.targetDir);
       const { outputFilePath, packed } = convertAverFileToJver(
         resolved,
-        this.config.paths.targetDir,
+        targetDirResolved,
       );
       const { header, trackingImages } = packed.parsed;
       const rawTime17 = `${header.enfDate}${header.enfTime}000`;
 
       this.logger.write('Watchdog', 'INFO', '[자규격 파일 저장 완료]');
       this.logger.write('Watchdog', 'INFO', `소스폴더: ${path.dirname(resolved)}`);
-      this.logger.write('Watchdog', 'INFO', `타겟폴더: ${path.resolve(this.config.paths.targetDir)}`);
+      this.logger.write('Watchdog', 'INFO', `타겟폴더: ${targetDirResolved}`);
       this.logger.write('Watchdog', 'INFO', `파일경로: ${outputFilePath}`);
 
       if (!forceManual && fs.existsSync(resolved)) {
@@ -241,7 +243,7 @@ export class FolderWatcherService {
       if (policy === 'delete') {
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       } else if (policy === 'quarantine') {
-        const qDir = path.resolve(this.config.paths.quarantineDir || './quarantine');
+        const qDir = resolveAppPath(this.config.paths.quarantineDir || './quarantine');
         if (!fs.existsSync(qDir)) fs.mkdirSync(qDir, { recursive: true });
         const dest = path.join(qDir, path.basename(filePath));
         fs.renameSync(filePath, dest);

@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import dotenv from 'dotenv';
+import { resolveAppPath } from './app-paths';
 import type { AtojAppConfig, InvalidFilePolicy } from '@shared/types/domain';
 
 dotenv.config();
@@ -33,7 +34,7 @@ export class ConfigManager {
 
   constructor(customConfigPath?: string) {
     const envPath = process.env.ATOJ_CONFIG_PATH;
-    this.configPath = path.resolve(customConfigPath || envPath || './config.json');
+    this.configPath = resolveAppPath(customConfigPath || envPath || './config.json');
   }
 
   public getConfigFilePath(): string {
@@ -183,7 +184,7 @@ export class ConfigManager {
     }
 
     for (const d of dirs) {
-      const resolved = path.resolve(d);
+      const resolved = resolveAppPath(d);
       if (!fs.existsSync(resolved)) {
         fs.mkdirSync(resolved, { recursive: true });
       }

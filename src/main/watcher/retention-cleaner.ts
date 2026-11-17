@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveAppPath } from '../config/app-paths';
 import type { ConversionRepository } from '../db/conversion-repo';
 import type { AtojAppConfig, RetentionCleanupResult } from '@shared/types/domain';
 
@@ -55,7 +56,7 @@ export class RetentionCleanerService {
   private deleteOldFilesInDir(dirPath: string, days: number, allowedExts?: string[]): number {
     if (!days || days <= 0 || !dirPath) return 0;
 
-    const resolved = path.resolve(dirPath);
+    const resolved = resolveAppPath(dirPath);
     if (!fs.existsSync(resolved)) return 0;
 
     const cutoffMs = Date.now() - days * 24 * 60 * 60 * 1000;
