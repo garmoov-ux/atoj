@@ -65,7 +65,12 @@ function createMainWindow(): BrowserWindow {
   return win;
 }
 
-const gotTheLock = app.requestSingleInstanceLock();
+const isDev = Boolean(process.env['ELECTRON_RENDERER_URL']);
+if (isDev) {
+  app.setPath('userData', join(app.getPath('appData'), 'atoj-dev'));
+}
+
+const gotTheLock = isDev ? true : app.requestSingleInstanceLock();
 if (!gotTheLock) {
   app.quit();
 } else {
