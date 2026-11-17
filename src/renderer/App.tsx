@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { GlobalNav, type NavTab } from './components/layout/GlobalNav';
 import { FrostedSubNav } from './components/layout/FrostedSubNav';
+import { StatusFooter } from './components/layout/StatusFooter';
 import { DashboardView } from './features/dashboard/DashboardView';
 import { HistoryView } from './features/history/HistoryView';
 import { BinaryViewerView } from './features/viewer/BinaryViewerView';
@@ -93,6 +94,8 @@ export const App: React.FC = () => {
           <SettingsView config={config} onSaveConfig={saveConfig} />
         )}
       </main>
+
+      <StatusFooter />
 
       {toastMessage && (
         <div className="fixed bottom-5 right-6 z-50 px-5 py-3 rounded-full bg-[#1d1d1f] text-white text-[13px] border border-[#3a3a3c]">

@@ -26,9 +26,9 @@ export const GlobalNav: React.FC<GlobalNavProps> = ({
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2 font-semibold text-[13px] tracking-[-0.01em]">
           <ShieldCheck className="w-4 h-4 text-[#2997ff]" />
-          <span>AtoJ Engine</span>
+          <span>AtoJ Converter v2.0.0</span>
           <span className="text-[11px] font-normal text-[#cccccc] ml-1">
-            경찰-6310-98-0001 (아 → 자)
+            규격: 경찰-6310-98-0001 (아 → 자)
           </span>
         </div>
 
