@@ -21,11 +21,6 @@ export function getMonthlyStatsReport(
   db: Database.Database,
   requestedYearMonth?: string,
 ): MonthlyStatsReport {
-  const yearMonth =
-    requestedYearMonth && /^\d{4}-\d{2}$/.test(requestedYearMonth)
-      ? requestedYearMonth
-      : getCurrentYearMonth();
-
   const monthRows = db
     .prepare(
       `SELECT DISTINCT strftime('%Y-%m', CASE WHEN violation_time LIKE '____-__-__%' THEN violation_time ELSE created_at END) as ym
@@ -34,6 +29,12 @@ export function getMonthlyStatsReport(
        ORDER BY ym DESC`,
     )
     .all() as { ym: string }[];
+
+  const latestDataMonth = monthRows.find((r) => Boolean(r.ym))?.ym;
+  const yearMonth =
+    requestedYearMonth && /^\d{4}-\d{2}$/.test(requestedYearMonth)
+      ? requestedYearMonth
+      : latestDataMonth || getCurrentYearMonth();
 
   const availableSet = new Set<string>([getCurrentYearMonth(), yearMonth]);
   for (const r of monthRows) {

@@ -1,10 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BarChart3, ChevronLeft, ChevronRight, FileText, RefreshCw } from 'lucide-react';
 import { PillButton } from '../../components/ui/PillButton';
-import type { MonthlyStatsReport } from '@shared/types/domain';
+import type {
+  ConversionRecord,
+  DailyStatItem,
+  DeviceStatItem,
+  MonthlyStatsReport,
+} from '@shared/types/domain';
 
 interface MonthlyStatsViewProps {
   onStatusMessage: (msg: string) => void;
+}
+
+function getCurrentYearMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
 function shiftYearMonth(ym: string, deltaMonths: number): string {
@@ -13,31 +23,151 @@ function shiftYearMonth(ym: string, deltaMonths: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
 }
 
+function extractRecordDate(r: ConversionRecord): string {
+  if (/^\d{4}-\d{2}-\d{2}/.test(r.violationTime)) {
+    return r.violationTime.slice(0, 10);
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(r.createdAt)) {
+    return r.createdAt.slice(0, 10);
+  }
+  return getCurrentYearMonth() + '-01';
+}
+
+function buildFallbackReportFromHistory(
+  items: ConversionRecord[],
+  requestedYm?: string,
+): MonthlyStatsReport {
+  const monthsSet = new Set<string>();
+  for (const r of items) {
+    monthsSet.add(extractRecordDate(r).slice(0, 7));
+  }
+  const sortedDataMonths = Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
+  const yearMonth = requestedYm || sortedDataMonths[0] || getCurrentYearMonth();
+
+  const availableSet = new Set<string>([getCurrentYearMonth(), yearMonth, ...sortedDataMonths]);
+  const availableMonths = Array.from(availableSet).sort((a, b) => b.localeCompare(a));
+
+  const monthItems = items.filter((r) => extractRecordDate(r).slice(0, 7) === yearMonth);
+  const successItems = monthItems.filter((r) => r.status === 'SUCCESS');
+  const failedItems = monthItems.filter((r) => r.status === 'FAILED');
+  const skippedItems = monthItems.filter((r) => r.status === 'SKIPPED');
+
+  const speedCount = successItems.filter((r) => r.enfCode === '1').length;
+  const signalCount = successItems.filter((r) => r.enfCode === '3').length;
+  const speeds = successItems.filter((r) => r.enfSpeed > 0).map((r) => r.enfSpeed);
+  const avgSpeed =
+    speeds.length > 0 ? Number((speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1)) : 0;
+  const maxSpeed = speeds.length > 0 ? Math.max(...speeds) : 0;
+  const activeDeviceCount = new Set(
+    successItems.map((r) => r.deviceCode).filter((c) => c && c !== '-'),
+  ).size;
+
+  const dailyMap = new Map<string, DailyStatItem>();
+  for (const r of monthItems) {
+    const day = extractRecordDate(r);
+    const cur = dailyMap.get(day) || {
+      day,
+      label: `${day.slice(8, 10)}일`,
+      totalCount: 0,
+      speedCount: 0,
+      signalCount: 0,
+      failedCount: 0,
+    };
+    if (r.status === 'SUCCESS') {
+      cur.totalCount++;
+      if (r.enfCode === '1') cur.speedCount++;
+      if (r.enfCode === '3') cur.signalCount++;
+    } else if (r.status === 'FAILED') {
+      cur.failedCount++;
+    }
+    dailyMap.set(day, cur);
+  }
+
+  const deviceMap = new Map<string, { total: number; speed: number; signal: number; speeds: number[] }>();
+  for (const r of successItems) {
+    const cur = deviceMap.get(r.deviceCode) || { total: 0, speed: 0, signal: 0, speeds: [] };
+    cur.total++;
+    if (r.enfCode === '1') cur.speed++;
+    if (r.enfCode === '3') cur.signal++;
+    if (r.enfSpeed > 0) cur.speeds.push(r.enfSpeed);
+    deviceMap.set(r.deviceCode, cur);
+  }
+
+  const deviceStats: DeviceStatItem[] = Array.from(deviceMap.entries())
+    .map(([deviceCode, v]) => ({
+      deviceCode,
+      totalCount: v.total,
+      speedCount: v.speed,
+      signalCount: v.signal,
+      avgSpeed:
+        v.speeds.length > 0
+          ? Number((v.speeds.reduce((a, b) => a + b, 0) / v.speeds.length).toFixed(1))
+          : 0,
+      maxSpeed: v.speeds.length > 0 ? Math.max(...v.speeds) : 0,
+    }))
+    .sort((a, b) => b.totalCount - a.totalCount);
+
+  return {
+    yearMonth,
+    availableMonths,
+    totalProcessed: monthItems.length,
+    totalSuccess: successItems.length,
+    totalFailed: failedItems.length,
+    totalSkipped: skippedItems.length,
+    speedCount,
+    signalCount,
+    avgSpeed,
+    maxSpeed,
+    activeDeviceCount,
+    dailyStats: Array.from(dailyMap.values()).sort((a, b) => a.day.localeCompare(b.day)),
+    deviceStats,
+  };
+}
+
 export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMessage }) => {
-  const [yearMonth, setYearMonth] = useState<string>(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  });
+  const [selectedYm, setSelectedYm] = useState<string | undefined>(undefined);
   const [report, setReport] = useState<MonthlyStatsReport | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  const fetchStats = useCallback(async (targetYm: string) => {
-    if (typeof window.atojApi.getMonthlyStats !== 'function') return;
-    const res = await window.atojApi.getMonthlyStats(targetYm);
-    if (res.success && res.data) {
-      setReport(res.data);
+  const fetchStats = useCallback(async (targetYm?: string) => {
+    if (typeof window.atojApi.getMonthlyStats === 'function') {
+      const res = await window.atojApi.getMonthlyStats(targetYm);
+      if (res.success && res.data) {
+        setReport(res.data);
+        setSelectedYm(res.data.yearMonth);
+        return;
+      }
+    }
+    const histRes = await window.atojApi.queryHistory({ limit: 1000, offset: 0 });
+    if (histRes.success && histRes.data) {
+      const built = buildFallbackReportFromHistory(histRes.data.items, targetYm);
+      setReport(built);
+      setSelectedYm(built.yearMonth);
     }
   }, []);
 
   useEffect(() => {
-    void fetchStats(yearMonth);
-  }, [yearMonth, fetchStats]);
+    void fetchStats(selectedYm);
+  }, [selectedYm, fetchStats]);
+
+  useEffect(() => {
+    const unsub = window.atojApi.onConversionEvent(() => {
+      void fetchStats(selectedYm);
+    });
+    return () => unsub();
+  }, [selectedYm, fetchStats]);
+
+  const activeYm = selectedYm || report?.yearMonth || getCurrentYearMonth();
+  const [yLabel, mLabel] = activeYm.split('-');
 
   const handleExportPdf = async () => {
-    if (typeof window.atojApi.exportMonthlyPdf !== 'function') return;
+    if (typeof window.atojApi.exportMonthlyPdf !== 'function') {
+      onStatusMessage('PDF 보고서 출력을 위해 프로그램을 한 번 재시작해 주세요.');
+      return;
+    }
     setExporting(true);
     try {
-      const res = await window.atojApi.exportMonthlyPdf(yearMonth);
+      const res = await window.atojApi.exportMonthlyPdf(activeYm);
       if (res.success && res.data) {
         onStatusMessage(`PDF 보고서 출력 완료: ${res.data.filePath}`);
       } else if (res.error) {
@@ -48,7 +178,6 @@ export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMess
     }
   };
 
-  const [yLabel, mLabel] = yearMonth.split('-');
   const totalSuccess = report?.totalSuccess ?? 0;
   const totalProcessed = report?.totalProcessed ?? 0;
   const successRate =
@@ -61,36 +190,40 @@ export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMess
 
   return (
     <div className="h-full p-3.5 w-full min-h-0 flex flex-col gap-3">
-      {/* 상단 연월 선택 및 PDF 보고서 출력 바 */}
-      <section className="bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] px-4 py-2.5 flex items-center justify-between gap-3 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <PillButton
-              variant="pearl-capsule"
-              size="sm"
-              onClick={() => setYearMonth((prev) => shiftYearMonth(prev, -1))}
+      {/* 상단 연월 선택 (뷰어와 동일한 아이콘 스테퍼 스타일) 및 PDF 출력 바 */}
+      <section className="bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] px-3.5 py-2 flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="inline-flex items-center bg-[#f8fafc] border border-[#cbd5e1] rounded-[8px] p-0.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setSelectedYm(shiftYearMonth(activeYm, -1))}
+              title="이전 달"
+              className="w-7 h-7 rounded-[6px] flex items-center justify-center text-[#334155] hover:bg-[#e2e8f0] hover:text-[#0f172a] transition-all duration-150 active:scale-95 cursor-pointer"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </PillButton>
-            <div className="px-3 py-1 rounded-[7px] bg-[#0f172a] text-white font-bold text-[13.5px] whitespace-nowrap">
-              {yLabel}년 {mLabel}월 통계
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className="px-3.5 h-7 flex items-center justify-center text-[13px] font-bold text-[#0f172a] whitespace-nowrap border-x border-[#e2e8f0] bg-[#ffffff] min-w-[104px]">
+              {yLabel}년 {mLabel}월
             </div>
-            <PillButton
-              variant="pearl-capsule"
-              size="sm"
-              onClick={() => setYearMonth((prev) => shiftYearMonth(prev, 1))}
+
+            <button
+              type="button"
+              onClick={() => setSelectedYm(shiftYearMonth(activeYm, 1))}
+              title="다음 달"
+              className="w-7 h-7 rounded-[6px] flex items-center justify-center text-[#334155] hover:bg-[#e2e8f0] hover:text-[#0f172a] transition-all duration-150 active:scale-95 cursor-pointer"
             >
-              <ChevronRight className="w-3.5 h-3.5" />
-            </PillButton>
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
-          <span className="text-[12px] text-[#64748b]">
-            월별 단속 규격 변환 실적 집계 및 발주처 제출용 A4 공식 보고서 생성
+          <span className="text-[12px] text-[#64748b] truncate">
+            월간 단속 변환 실적 집계 및 발주처 제출용 A4 공식 보고서 출력
           </span>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
-          <PillButton variant="pearl-capsule" size="sm" onClick={() => void fetchStats(yearMonth)}>
+          <PillButton variant="pearl-capsule" size="sm" onClick={() => void fetchStats(activeYm)}>
             <RefreshCw className="w-3.5 h-3.5" />
             <span>새로고침</span>
           </PillButton>

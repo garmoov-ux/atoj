@@ -94,35 +94,37 @@ export const BinaryViewerView: React.FC<BinaryViewerViewProps> = ({
   return (
     <div className="h-full flex flex-col gap-3 p-3.5 w-full min-h-0">
       <div className="flex items-center justify-between gap-2 bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] px-3.5 py-2 shrink-0">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="flex items-center gap-1 shrink-0">
-            <PillButton
-              variant="pearl-capsule"
-              size="sm"
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="inline-flex items-center bg-[#f8fafc] border border-[#cbd5e1] rounded-[8px] p-0.5 shrink-0">
+            <button
+              type="button"
               disabled={!inspected.prevRecordId}
               onClick={() => inspected.prevRecordId && onSelectRecordById(inspected.prevRecordId)}
               title="이전 순번 단속 데이터 (← 방향키)"
+              className="w-7 h-7 rounded-[6px] flex items-center justify-center text-[#334155] hover:bg-[#e2e8f0] hover:text-[#0f172a] disabled:opacity-35 disabled:pointer-events-none transition-all duration-150 active:scale-95 cursor-pointer"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span>이전</span>
-            </PillButton>
+              <ChevronLeft className="w-4 h-4" />
+            </button>
 
-            {inspected.totalSuccessCount ? (
-              <span className="px-2.5 py-1 rounded-[6px] bg-[#f1f5f9] border border-[#cbd5e1] text-[12px] font-semibold text-[#334155] whitespace-nowrap">
-                {inspected.currentPosition} / {inspected.totalSuccessCount}건
+            <div className="px-3 h-7 flex items-center justify-center gap-1 text-[12.5px] whitespace-nowrap border-x border-[#e2e8f0] bg-[#ffffff] min-w-[78px]">
+              <span className="font-extrabold text-[#2563eb]">
+                {inspected.currentPosition ?? 1}
               </span>
-            ) : null}
+              <span className="text-[#94a3b8] font-medium">/</span>
+              <span className="font-semibold text-[#334155]">
+                {inspected.totalSuccessCount ?? 1}건
+              </span>
+            </div>
 
-            <PillButton
-              variant="pearl-capsule"
-              size="sm"
+            <button
+              type="button"
               disabled={!inspected.nextRecordId}
               onClick={() => inspected.nextRecordId && onSelectRecordById(inspected.nextRecordId)}
               title="다음 순번 단속 데이터 (→ 방향키)"
+              className="w-7 h-7 rounded-[6px] flex items-center justify-center text-[#334155] hover:bg-[#e2e8f0] hover:text-[#0f172a] disabled:opacity-35 disabled:pointer-events-none transition-all duration-150 active:scale-95 cursor-pointer"
             >
-              <span>다음</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </PillButton>
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
           <span
