@@ -19,7 +19,7 @@ export const WatchedFoldersCard: React.FC<WatchedFoldersCardProps> = ({
     <UtilityCard
       title="수신 감시 폴더"
       badge={
-        <span className="text-[12px] text-[#7a7a7a] font-normal whitespace-nowrap">
+        <span className="text-[13px] text-[#7a7a7a] font-normal whitespace-nowrap">
           {summary.watchedFolders.filter((f) => f.exists).length}/{summary.watchedFolders.length} 연결됨
         </span>
       }
@@ -32,7 +32,7 @@ export const WatchedFoldersCard: React.FC<WatchedFoldersCardProps> = ({
     >
       <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
         {summary.watchedFolders.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-[13px] text-[#7a7a7a]">
+          <div className="h-full flex items-center justify-center text-[14px] text-[#7a7a7a]">
             등록된 감시 폴더 없음
           </div>
         ) : (
@@ -44,14 +44,14 @@ export const WatchedFoldersCard: React.FC<WatchedFoldersCardProps> = ({
               <div className="flex items-center gap-2 min-w-0">
                 <Folder className="w-4 h-4 text-[#0066cc] shrink-0" />
                 <span
-                  className="text-[13px] text-[#1d1d1f] truncate"
+                  className="text-[14px] text-[#1d1d1f] truncate"
                   title={folder.path}
                 >
                   {folder.path}
                 </span>
               </div>
               <span
-                className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${
+                className={`inline-flex items-center gap-1.5 text-[12px] font-semibold px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${
                   folder.exists
                     ? 'bg-[#ffffff] text-[#0066cc] border border-[#e0e0e0]'
                     : 'bg-[#ffffff] text-[#7a7a7a] border border-[#e0e0e0]'
@@ -70,7 +70,7 @@ export const WatchedFoldersCard: React.FC<WatchedFoldersCardProps> = ({
       </div>
 
       {config && (
-        <div className="mt-4 pt-3.5 border-t border-[#e0e0e0] space-y-2 text-[12px] shrink-0">
+        <div className="mt-4 pt-3.5 border-t border-[#e0e0e0] space-y-2 text-[13px] shrink-0">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[#7a7a7a] whitespace-nowrap">변환 파일 저장 경로</span>
             <strong className="text-[#1d1d1f] truncate">{config.paths.targetDir}</strong>

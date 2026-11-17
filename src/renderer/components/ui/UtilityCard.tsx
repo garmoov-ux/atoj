@@ -29,7 +29,7 @@ export const UtilityCard: React.FC<UtilityCardProps> = ({
         <header className="flex items-center justify-between gap-3 mb-3.5 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             {title && (
-              <h3 className="text-[15px] font-semibold tracking-[-0.015em] whitespace-nowrap">
+              <h3 className="text-[17px] font-semibold tracking-[-0.015em] whitespace-nowrap">
                 {title}
               </h3>
             )}

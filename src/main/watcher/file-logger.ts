@@ -21,6 +21,9 @@ function getTimestampFormatted(): string {
   return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
 }
 
+export type LogCategory = '감시엔진' | '변환처리' | '자동정리' | '시스템';
+export type LogLevel = '정보' | '주의' | '오류';
+
 export class FileLogger {
   private logDir: string;
 
@@ -34,6 +37,10 @@ export class FileLogger {
     this.ensureDir();
   }
 
+  public getResolvedLogDir(): string {
+    return this.logDir;
+  }
+
   private ensureDir(): void {
     if (!fs.existsSync(this.logDir)) {
       fs.mkdirSync(this.logDir, { recursive: true });
@@ -41,16 +48,39 @@ export class FileLogger {
   }
 
   public write(
-    scope: 'Watchdog' | 'Observer',
-    level: 'INFO' | 'ERROR' | 'WARNING',
+    scope: 'Watchdog' | 'Observer' | LogCategory,
+    level: 'INFO' | 'ERROR' | 'WARNING' | LogLevel,
     message: string,
   ): void {
     try {
       this.ensureDir();
-      const prefix = scope === 'Watchdog' ? 'watchdog' : 'observer';
+
+      const categoryLabel: LogCategory =
+        scope === 'Watchdog'
+          ? '변환처리'
+          : scope === 'Observer'
+            ? '감시엔진'
+            : scope;
+
+      const levelLabel: LogLevel =
+        level === 'INFO'
+          ? '정보'
+          : level === 'WARNING'
+            ? '주의'
+            : level === 'ERROR'
+              ? '오류'
+              : level;
+
+      const prefix =
+        categoryLabel === '변환처리'
+          ? 'watchdog'
+          : categoryLabel === '감시엔진'
+            ? 'observer'
+            : 'system';
+
       const fileName = `${prefix}_${getTodayCompact()}.log`;
       const fullPath = path.join(this.logDir, fileName);
-      const line = `[${getTimestampFormatted()}] [${scope}] [${level}] - ${message}\r\n`;
+      const line = `[${getTimestampFormatted()}] [${categoryLabel}] [${levelLabel}] ${message}\r\n`;
       fs.appendFileSync(fullPath, line, 'utf-8');
     } catch {
       // 파일 로깅 실패 시 앱 중단 방지

@@ -1,21 +1,25 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { resolveAppPath } from '../config/app-paths';
+import { FileLogger } from './file-logger';
 import type { ConversionRepository } from '../db/conversion-repo';
 import type { AtojAppConfig, RetentionCleanupResult } from '@shared/types/domain';
 
 export class RetentionCleanerService {
   private config: AtojAppConfig;
   private readonly repo: ConversionRepository;
+  private readonly logger: FileLogger;
   private timer: NodeJS.Timeout | null = null;
 
   constructor(config: AtojAppConfig, repo: ConversionRepository) {
     this.config = config;
     this.repo = repo;
+    this.logger = new FileLogger(config.paths.logDir);
   }
 
   public updateConfig(nextConfig: AtojAppConfig): void {
     this.config = nextConfig;
+    this.logger.setLogDir(nextConfig.paths.logDir);
   }
 
   public startPeriodicCleanup(): void {
@@ -44,6 +48,19 @@ export class RetentionCleanerService {
       paths.quarantineDir,
       retention.quarantineDays,
     );
+
+    if (
+      deletedLogs > 0 ||
+      deletedDbRows > 0 ||
+      deletedResults > 0 ||
+      deletedQuarantines > 0
+    ) {
+      this.logger.write(
+        '자동정리',
+        '정보',
+        `보관 기간 경과 데이터 정리 완료 | 삭제된 로그 파일: ${deletedLogs}개 | 정리된 변환 이력: ${deletedDbRows}건 | 삭제된 미수거 결과 파일: ${deletedResults}개 | 삭제된 격리 파일: ${deletedQuarantines}개`,
+      );
+    }
 
     return {
       deletedLogs,

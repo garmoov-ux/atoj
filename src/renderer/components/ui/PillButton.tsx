@@ -20,8 +20,8 @@ export const PillButton: React.FC<PillButtonProps> = ({
 
   const sizeClass =
     size === 'sm'
-      ? 'h-[32px] px-3.5 text-[12px] leading-none'
-      : 'h-[36px] px-4 text-[13px] leading-none';
+      ? 'h-[34px] px-4 text-[13px] leading-none'
+      : 'h-[38px] px-5 text-[14px] leading-none';
 
   const variantMap: Record<PillButtonVariant, string> = {
     primary: 'bg-[#0066cc] text-white rounded-full',

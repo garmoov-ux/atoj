@@ -1,4 +1,5 @@
 import { dialog, ipcMain, type BrowserWindow } from 'electron';
+import { toPortableRelativeIfInsideBase } from '../config/app-paths';
 import type { ConfigManager } from '../config/config-manager';
 import type { ConversionRepository } from '../db/conversion-repo';
 import type { FolderWatcherService } from '../watcher/folder-watcher';
@@ -36,6 +37,9 @@ export function registerIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.CLEAR_HISTORY, () =>
     wrapIpc(() => {
       const deleted = repo.clearAll();
+      watcherService
+        .getLogger()
+        .write('시스템', '주의', `사용자에 의해 변환 이력 전체 비우기가 실행되었습니다. (삭제 건수: ${deleted}건)`);
       return { deleted };
     }),
   );
@@ -55,6 +59,9 @@ export function registerIpcHandlers(
       }
 
       const count = repo.exportToCsv(filter || {}, saveRes.filePath);
+      watcherService
+        .getLogger()
+        .write('시스템', '정보', `변환 이력 목록 파일 저장 완료 | 저장 건수: ${count}건 | 파일 경로: ${saveRes.filePath}`);
       return { filePath: saveRes.filePath, count };
     }),
   );
@@ -77,11 +84,11 @@ export function registerIpcHandlers(
     wrapIpc(async () => {
       const win = mainWindowGetter();
       const res = await dialog.showOpenDialog(win!, {
-        title: '폴더 선택',
+        title: '폴더 선택 (프로그램 하위 폴더 선택 시 ./상대경로 자동 적용)',
         properties: ['openDirectory', 'createDirectory'],
       });
       if (res.canceled || res.filePaths.length === 0) return null;
-      return res.filePaths[0].replace(/\\/g, '/');
+      return toPortableRelativeIfInsideBase(res.filePaths[0]);
     }),
   );
 
