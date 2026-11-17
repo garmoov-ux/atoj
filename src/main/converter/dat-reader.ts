@@ -44,7 +44,7 @@ export function inspectBinaryFile(filePath: string): DatInspectionResult {
       fileSize: buf.length,
       fileFormat: 'AVER_RAW',
       violationCode: vCode,
-      violationLabel: VIOLATION_LABELS[vCode] || `코드 ${vCode}`,
+      violationLabel: VIOLATION_LABELS[vCode] || '기타위반',
       fileVersion: 'AVER-114B',
       carType: header.carType,
       carTypeLabel: CAR_TYPE_LABELS[header.carType] || `${header.carType}`,
@@ -114,36 +114,50 @@ export function inspectBinaryFile(filePath: string): DatInspectionResult {
   let carDirection: number | undefined;
   let signalType: number | undefined;
 
-  if (violationCode === 1) {
-    speedLimit = buf.readInt16BE(offset);
-    violationSpeed = buf.readInt16BE(offset + 2);
-    offset += 4;
-  } else if (violationCode === 3) {
-    violationSpeed = buf.readInt16BE(offset);
-    offset += 2;
-    signalStartPassTime = buf.readDoubleBE(offset);
-    offset += 8;
-    signalEndPassTime = buf.readDoubleBE(offset);
-    offset += 8;
-    signalShape = buf.readInt8(offset);
-    carDirection = buf.readInt8(offset + 1);
-    signalType = buf.readInt8(offset + 2);
-    offset += 3;
+  // 일부 기타코드(enf_code='0' 등) 파일에서 속도/신호 분기 바이트 없이 곧바로 'J' + 'F21_...' 영상 블록이 시작되는 경우 자동 감지
+  const startsImageBlockDirectly =
+    offset + 2 <= buf.length && buf[offset] === 0x4a && buf[offset + 1] === 0x46;
+
+  if (!startsImageBlockDirectly) {
+    if (violationCode === 1 && offset + 4 <= buf.length) {
+      speedLimit = buf.readInt16BE(offset);
+      violationSpeed = buf.readInt16BE(offset + 2);
+      offset += 4;
+    } else if (violationCode === 3 && offset + 21 <= buf.length) {
+      violationSpeed = buf.readInt16BE(offset);
+      offset += 2;
+      signalStartPassTime = buf.readDoubleBE(offset);
+      offset += 8;
+      signalEndPassTime = buf.readDoubleBE(offset);
+      offset += 8;
+      signalShape = buf.readInt8(offset);
+      carDirection = buf.readInt8(offset + 1);
+      signalType = buf.readInt8(offset + 2);
+      offset += 3;
+    }
   }
 
-  // 차량 이미지
-  offset += 1 + 50; // 종류(1B) + 파일명(50B)
-  const carImgSize = buf.readUInt32BE(offset);
-  offset += 4;
-  const carImgBuf = buf.subarray(offset, offset + carImgSize);
-  offset += carImgSize;
+  let carImgBuf: Buffer = Buffer.alloc(0);
+  if (offset + 55 <= buf.length) {
+    offset += 1 + 50; // 종류(1B) + 파일명(50B)
+    const carImgSize = buf.readUInt32BE(offset);
+    offset += 4;
+    if (carImgSize > 0 && offset + carImgSize <= buf.length) {
+      carImgBuf = buf.subarray(offset, offset + carImgSize);
+      offset += carImgSize;
+    }
+  }
 
-  // 번호판 이미지
-  offset += 1 + 50; // 종류(1B) + 파일명(50B)
-  const plateImgSize = buf.readUInt32BE(offset);
-  offset += 4;
-  const plateImgBuf = buf.subarray(offset, offset + plateImgSize);
-  offset += plateImgSize;
+  let plateImgBuf: Buffer = Buffer.alloc(0);
+  if (offset + 55 <= buf.length) {
+    offset += 1 + 50; // 종류(1B) + 파일명(50B)
+    const plateImgSize = buf.readUInt32BE(offset);
+    offset += 4;
+    if (plateImgSize > 0 && offset + plateImgSize <= buf.length) {
+      plateImgBuf = buf.subarray(offset, offset + plateImgSize);
+      offset += plateImgSize;
+    }
+  }
 
   const trackingImagesBase64: string[] = [];
   let trackingCount = 0;
@@ -156,7 +170,7 @@ export function inspectBinaryFile(filePath: string): DatInspectionResult {
       offset += 1 + 50;
       const tSize = buf.readUInt32BE(offset);
       offset += 4;
-      if (offset + tSize > buf.length) break;
+      if (tSize <= 0 || offset + tSize > buf.length) break;
       const tBuf = buf.subarray(offset, offset + tSize);
       trackingImagesBase64.push(`data:image/jpeg;base64,${tBuf.toString('base64')}`);
       offset += tSize;
@@ -164,12 +178,13 @@ export function inspectBinaryFile(filePath: string): DatInspectionResult {
   }
 
   return {
+    fileStatus: 'AVAILABLE',
     fileName,
     filePath: resolved,
     fileSize: buf.length,
     fileFormat: 'JVER_DAT',
     violationCode,
-    violationLabel: VIOLATION_LABELS[violationCode] || `코드 ${violationCode}`,
+    violationLabel: VIOLATION_LABELS[violationCode] || '기타위반',
     fileVersion: `0x${verMajor.toString(16).padStart(2, '0')}${verMinor.toString(16).padStart(2, '0')}`,
     carType,
     carTypeLabel: CAR_TYPE_LABELS[carType] || `${carType}`,

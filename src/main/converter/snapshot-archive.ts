@@ -71,20 +71,25 @@ export function inspectConversionRecord(
   }
 
   if (candidateFilePath) {
-    const baseResult = inspectBinaryFile(candidateFilePath);
-    return {
-      ...baseResult,
-      fileName: record.targetFileName || baseResult.fileName,
-      filePath: record.targetPath || baseResult.filePath,
-      recordId: record.id,
-      sourceFileName: record.sourceFileName,
-      targetFileName: record.targetFileName,
-      deviceCode: record.deviceCode !== '-' ? record.deviceCode : rawHeader?.deviceCode,
-      createdAt: record.createdAt,
-      fileStatus,
-      rawHeader,
-      ...navMeta,
-    };
+    try {
+      const baseResult = inspectBinaryFile(candidateFilePath);
+      return {
+        ...baseResult,
+        violationSpeed: baseResult.violationSpeed || record.enfSpeed || rawHeader?.enfSpeed || 0,
+        fileName: record.targetFileName || baseResult.fileName,
+        filePath: record.targetPath || baseResult.filePath,
+        recordId: record.id,
+        sourceFileName: record.sourceFileName,
+        targetFileName: record.targetFileName,
+        deviceCode: record.deviceCode !== '-' ? record.deviceCode : rawHeader?.deviceCode,
+        createdAt: record.createdAt,
+        fileStatus,
+        rawHeader,
+        ...navMeta,
+      };
+    } catch {
+      // 바이너리 파일 파싱 예외 발생 시에도 이전/다음 탐색이 멈추지 않도록 DB/헤더 메타데이터 폴백으로 진행
+    }
   }
 
   const vCode = Number(record.enfCode) === 3 ? 3 : 1;
