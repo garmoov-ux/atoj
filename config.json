@@ -11,7 +11,7 @@
     "quarantineDir": "./quarantine"
   },
   "watcher": {
-    "writeStabilitySec": 3,
+    "writeStabilitySec": 5,
     "scanExistingOnStart": true,
     "invalidFilePolicy": "ignore"
   },

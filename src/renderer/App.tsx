@@ -7,12 +7,11 @@ import { BinaryViewerView } from './features/viewer/BinaryViewerView';
 import { MonthlyStatsView } from './features/stats/MonthlyStatsView';
 import { RealtimeLogsView } from './features/logs/RealtimeLogsView';
 import { SettingsView } from './features/settings/SettingsView';
-import { ProgramInfoModal } from './features/about/ProgramInfoView';
+import { ProgramInfoView } from './features/about/ProgramInfoView';
 import { useAtojState } from './hooks/useAtojState';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
-  const [isAboutOpen, setIsAboutOpen] = useState(false);
   const {
     summary,
     config,
@@ -44,7 +43,6 @@ export const App: React.FC = () => {
   };
 
   const handleSelectTab = (tab: NavTab) => {
-    setIsAboutOpen(false);
     setActiveTab(tab);
     if (tab === 'viewer' && !inspected) {
       void inspectRecordById();
@@ -70,8 +68,6 @@ export const App: React.FC = () => {
       <GlobalNav
         activeTab={activeTab}
         onSelectTab={handleSelectTab}
-        isAboutOpen={isAboutOpen}
-        onOpenAbout={() => setIsAboutOpen((prev) => !prev)}
         isWatching={summary.isWatching}
         onToggleWatcher={() => void toggleWatcher()}
         onScanNow={() => void scanNow()}
@@ -126,18 +122,18 @@ export const App: React.FC = () => {
               onRunCleanupNow={runRetentionCleanupNow}
             />
           )}
+
+          {activeTab === 'about' && (
+            <ProgramInfoView
+              onScanNow={() => void scanNow()}
+              onRunCleanupNow={() => void runRetentionCleanupNow()}
+              onStatusMessage={showToast}
+            />
+          )}
         </main>
 
         <StatusFooter />
       </div>
-
-      <ProgramInfoModal
-        isOpen={isAboutOpen}
-        onClose={() => setIsAboutOpen(false)}
-        onScanNow={() => void scanNow()}
-        onRunCleanupNow={() => void runRetentionCleanupNow()}
-        onStatusMessage={showToast}
-      />
 
       {toastMessage && (
         <div className="fixed bottom-9 right-4 z-50 px-3.5 py-2 rounded-[8px] bg-[#0f172a] text-white text-[12px] border border-[#334155] whitespace-nowrap">

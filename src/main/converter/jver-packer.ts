@@ -75,17 +75,17 @@ export function packAverToJverBuffer(rawAverBuffer: Buffer): PackedJverResult {
   chunks.push(packInt16BE(header.carNumWidth)); // 번호판WIDTH (>h)
   chunks.push(packInt16BE(header.carNumHeight)); // 번호판HEIGHT (>h)
 
-  // 2. 위반코드별 분기 (1: 속도위반, 3: 신호위반)
-  if (header.enfCode === '1') {
-    chunks.push(packInt16BE(header.enfSpeed)); // 단속속도 (>h)
-    chunks.push(packInt16BE(header.enfSpeed)); // 위반속도 (>h)
-  } else if (header.enfCode === '3') {
+  // 2. 위반코드별 분기 (3: 신호위반, 그 외 1/기타: 속도위반 4B 구조)
+  if (header.enfCode === '3') {
     chunks.push(packInt16BE(header.enfSpeed)); // 위반속도 (>h)
     chunks.push(packDoubleBE(Number.parseFloat(header.signalStartPassTime))); // 정지선통과시간 (>d)
     chunks.push(packDoubleBE(Number.parseFloat(header.signalEndPassTime))); // 교차로통과시간 (>d)
     chunks.push(packInt8(header.signalShape)); // 신호등형태 (b)
     chunks.push(packInt8(header.carDirection)); // 차량진행형태 (b)
     chunks.push(packInt8(header.signalType)); // 신호등종류 (b)
+  } else {
+    chunks.push(packInt16BE(header.enfSpeed)); // 단속속도 (>h)
+    chunks.push(packInt16BE(header.enfSpeed)); // 위반속도 (>h)
   }
 
   // 3. 차량 전체 영상 블록

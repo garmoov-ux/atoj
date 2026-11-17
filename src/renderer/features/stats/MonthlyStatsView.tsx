@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { BarChart3, ChevronLeft, ChevronRight, FileText, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, RefreshCw } from 'lucide-react';
 import { PillButton } from '../../components/ui/PillButton';
+import { InteractiveStatsChart } from './InteractiveStatsChart';
 import type {
   ConversionRecord,
   DailyStatItem,
@@ -186,7 +187,6 @@ export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMess
     totalSuccess > 0 ? (((report?.speedCount ?? 0) / totalSuccess) * 100).toFixed(1) : '0.0';
   const signalPct =
     totalSuccess > 0 ? (((report?.signalCount ?? 0) / totalSuccess) * 100).toFixed(1) : '0.0';
-  const maxDaily = Math.max(...(report?.dailyStats.map((d) => d.totalCount) ?? [1]), 1);
 
   return (
     <div className="h-full p-3.5 w-full min-h-0 flex flex-col gap-3">
@@ -218,7 +218,7 @@ export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMess
           </div>
 
           <span className="text-[12px] text-[#64748b] truncate">
-            월간 단속 변환 실적 집계 및 발주처 제출용 A4 공식 보고서 출력
+            차트에 마우스를 올리면 상세 단속 수치가 표시됩니다.
           </span>
         </div>
 
@@ -234,7 +234,7 @@ export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMess
             onClick={() => void handleExportPdf()}
           >
             <FileText className="w-3.5 h-3.5" />
-            <span>{exporting ? 'PDF 생성 중...' : 'PDF 보고서 출력 (발주처 제출용)'}</span>
+            <span>{exporting ? 'PDF 생성 중...' : 'PDF 보고서 출력'}</span>
           </PillButton>
         </div>
       </section>
@@ -284,58 +284,9 @@ export const MonthlyStatsView: React.FC<MonthlyStatsViewProps> = ({ onStatusMess
         </div>
       </div>
 
-      {/* 하단 2단: 일자별 추이 차트 + 장비별 집계 시트 */}
+      {/* 하단 2단: 탭형 인터랙티브 차트 + 장비별 집계 시트 */}
       <div className="flex-1 min-h-0 grid grid-cols-12 gap-3">
-        <section className="col-span-7 bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] p-3.5 flex flex-col min-h-0">
-          <div className="flex items-center justify-between mb-2 shrink-0">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-[#2563eb]" />
-              <h3 className="text-[14px] font-bold text-[#0f172a]">일자별 단속 변환 추이 차트</h3>
-            </div>
-            <div className="flex items-center gap-3 text-[11.5px]">
-              <span className="inline-flex items-center gap-1 text-[#334155]">
-                <span className="w-2.5 h-2.5 rounded-[2px] bg-[#2563eb]" /> 속도위반
-              </span>
-              <span className="inline-flex items-center gap-1 text-[#334155]">
-                <span className="w-2.5 h-2.5 rounded-[2px] bg-[#e11d48]" /> 신호위반
-              </span>
-            </div>
-          </div>
-
-          <div className="flex-1 min-h-0 bg-[#f8fafc] border border-[#e2e8f0] rounded-[8px] p-3 flex flex-col justify-end overflow-x-auto">
-            {!report || report.dailyStats.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-[13px] text-[#64748b]">
-                {yLabel}년 {mLabel}월에 집계된 변환 이력이 없습니다.
-              </div>
-            ) : (
-              <div className="flex items-end gap-2 h-full pt-6 pb-1 px-1 min-w-full">
-                {report.dailyStats.map((d) => {
-                  const totalH = Math.max(Math.round((d.totalCount / maxDaily) * 180), 6);
-                  const sigH = d.totalCount > 0 ? Math.round((d.signalCount / d.totalCount) * totalH) : 0;
-                  const spdH = Math.max(totalH - sigH, 0);
-                  return (
-                    <div
-                      key={d.day}
-                      className="flex-1 min-w-[24px] flex flex-col items-center justify-end h-full"
-                      title={`${d.day}: 총 ${d.totalCount}건 (속도 ${d.speedCount}건, 신호 ${d.signalCount}건)`}
-                    >
-                      <span className="text-[10.5px] font-bold text-[#0f172a] mb-1">
-                        {d.totalCount}
-                      </span>
-                      <div className="w-full max-w-[26px] rounded-t-[4px] overflow-hidden flex flex-col">
-                        <div style={{ height: `${sigH}px` }} className="bg-[#e11d48] w-full" />
-                        <div style={{ height: `${spdH}px` }} className="bg-[#2563eb] w-full" />
-                      </div>
-                      <span className="text-[10.5px] text-[#64748b] mt-1.5 whitespace-nowrap">
-                        {d.label}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </section>
+        <InteractiveStatsChart report={report} yearLabel={yLabel} monthLabel={mLabel} />
 
         {/* 우측: 장비번호별 집계 단일 테두리 테이블 시트 */}
         <section className="col-span-5 bg-[#ffffff] border border-[#cbd5e1] rounded-[10px] overflow-hidden flex flex-col min-h-0">

@@ -19,13 +19,12 @@ export type NavTab =
   | 'history'
   | 'stats'
   | 'logs'
-  | 'settings';
+  | 'settings'
+  | 'about';
 
 interface GlobalNavProps {
   activeTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
-  isAboutOpen: boolean;
-  onOpenAbout: () => void;
   isWatching: boolean;
   onToggleWatcher: () => void;
   onScanNow: () => void;
@@ -54,7 +53,7 @@ const TABS: { id: NavTab; label: string; title: string; icon: React.ReactNode }[
   {
     id: 'stats',
     label: '통계',
-    title: '월별 단속 통계 차트 및 발주처 제출용 PDF 보고서 출력',
+    title: '월별 단속 통계 차트 및 PDF 보고서 출력',
     icon: <BarChart3 className="w-[17px] h-[17px]" />,
   },
   {
@@ -69,13 +68,17 @@ const TABS: { id: NavTab; label: string; title: string; icon: React.ReactNode }[
     title: '감시 폴더 및 보관 기간 설정',
     icon: <Settings className="w-[17px] h-[17px]" />,
   },
+  {
+    id: 'about',
+    label: '정보',
+    title: '프로그램 정보 · 버전 기록 · 유지보수 도구',
+    icon: <Info className="w-[17px] h-[17px]" />,
+  },
 ];
 
 export const GlobalNav: React.FC<GlobalNavProps> = ({
   activeTab,
   onSelectTab,
-  isAboutOpen,
-  onOpenAbout,
   isWatching,
   onToggleWatcher,
   onScanNow,
@@ -86,8 +89,8 @@ export const GlobalNav: React.FC<GlobalNavProps> = ({
       <div className="flex flex-col items-center gap-2 w-full">
         <button
           type="button"
-          onClick={onOpenAbout}
-          title="AtoJ 프로그램 정보 보기"
+          onClick={() => onSelectTab('about')}
+          title="AtoJ 프로그램 정보"
           className="relative w-[46px] h-[34px] rounded-[8px] bg-[#1e293b] hover:bg-[#334155] border border-[#334155] flex items-center justify-center transition-all duration-150 active:scale-95 cursor-pointer"
         >
           <span className="text-[12.5px] font-extrabold tracking-tight text-white leading-none">
@@ -104,7 +107,7 @@ export const GlobalNav: React.FC<GlobalNavProps> = ({
 
         <nav className="flex flex-col items-center gap-1 w-full px-1.5">
           {TABS.map((t) => {
-            const active = activeTab === t.id && !isAboutOpen;
+            const active = activeTab === t.id;
             return (
               <button
                 key={t.id}
@@ -122,20 +125,6 @@ export const GlobalNav: React.FC<GlobalNavProps> = ({
               </button>
             );
           })}
-
-          <button
-            type="button"
-            title="프로그램 정보 · 버전 기록 · 유지보수 도구 (모달)"
-            onClick={onOpenAbout}
-            className={`w-full py-1.5 rounded-[7px] flex flex-col items-center justify-center gap-0.5 transition-all duration-150 active:scale-95 cursor-pointer ${
-              isAboutOpen
-                ? 'bg-[#2563eb] text-white font-semibold'
-                : 'text-slate-400 hover:bg-[#1e293b] hover:text-slate-100 font-normal'
-            }`}
-          >
-            <Info className="w-[17px] h-[17px]" />
-            <span className="text-[10.5px] leading-none">정보</span>
-          </button>
         </nav>
       </div>
 
