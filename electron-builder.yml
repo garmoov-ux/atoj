@@ -1,5 +1,6 @@
 appId: com.muin.atoj
 productName: AtoJ
+afterPack: resources/after-pack.cjs
 npmRebuild: false
 directories:
   buildResources: build

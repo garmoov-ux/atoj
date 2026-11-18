@@ -66,6 +66,8 @@ function createMainWindow(): BrowserWindow {
 }
 
 const isDev = Boolean(process.env['ELECTRON_RENDERER_URL']);
+app.setName('AtoJ - 무인교통단속장비 규격 변환기');
+app.setAppUserModelId('com.muin.atoj');
 if (isDev) {
   app.setPath('userData', join(app.getPath('appData'), 'atoj-dev'));
 }
